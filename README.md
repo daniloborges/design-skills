@@ -1,77 +1,95 @@
-# design — skills de tipografia e espaçamento semânticos
+<h1 align="center">design</h1>
 
-Skills para mapear estilos de texto em nomes semânticos (`papel/tamanho`) e organizar as variáveis de espaçamento do auto layout (`gap/md`, `padding/lg`), mantendo Figma e código coerentes, com checagens de acessibilidade e compliance opcional para o Brasil.
+<p align="center"><strong>Semantic type styles and spacing variables, in Figma and in code, kept in sync.</strong><br>
+A Claude Code plugin that renames <code>Text 14</code> to <code>body/md</code>, <code>item spacing/14_01</code> to <code>gap/md</code>, and checks that your CSS follows the same names.</p>
 
-## Estrutura
+<p align="center">
+  <a href="https://github.com/daniloborges/design-skills/actions/workflows/check.yml"><img alt="check" src="https://github.com/daniloborges/design-skills/actions/workflows/check.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue.svg"></a>
+</p>
 
-```
-design/
-├── shared/                        ← FONTE ÚNICA DE VERDADE (edite aqui)
-│   ├── taxonomia.md               nomes, faixas, HTML, pisos, heurística
-│   ├── plataformas.md             equivalência M3 · Apple · Fluent · design systems
-│   ├── espacamento.md             escala, lista fechada, regras de encaixe, armadilhas (espaçamento)
-│   ├── espacamento-plataformas.md Atlassian · Polaris · Primer · Dialtone · escopos do Figma · DTCG · fontes
-│   └── legal/                     auditoria opcional
-│       ├── README.md              como escolher grupos e formato do checklist
-│       ├── lei.md                 LBI, Lei 10.098, Decreto 5.296, eMAG (federal)
-│       ├── voluntario.md          WCAG AA/AAA, NBR 17225, eMAG, gov.br DS
-│       └── setorial.md            CDC (contratos), ANVISA (bulas), lacunas
-├── skills/                        ← skills no formato Anthropic (pasta + SKILL.md)
-│   ├── tipografia-semantica-figma/
-│   │   ├── SKILL.md               inventário → mapa → aprovação → aplicação
-│   │   ├── scripts/inventario.js  leitura: peso real (fonte variável), duplicatas, sugestão de escopo do preview
-│   │   ├── scripts/aplicar.js     modos preview (ANTES × DEPOIS + marcações) · promover · aplicar · descartar
-│   │   └── references/            cópia de shared/ (gerada pelo sync.sh)
-│   ├── espacamento-semantico-figma/
-│   │   ├── SKILL.md               inventário → plano → proposta → preview → aplicar → arquivar
-│   │   ├── scripts/inventario.js  leitura: variáveis, escopos, usos, valores soltos por classe, fora de escopo
-│   │   ├── scripts/aplicar.js     modos plano (leitura) · preview · aplicar · arquivar · descartar
-│   │   └── references/            cópia de shared/espacamento*.md (gerada pelo sync.sh)
-│   └── tipografia-semantica-codigo/
-│       ├── SKILL.md               guardrail de tokens e HTML
-│       ├── scripts/checar-tipografia.mjs   lint (exit 1 em bloqueante → CI)
-│       ├── scripts/gerar-tokens.mjs        Figma → CSS (rem) + DTCG
-│       └── references/            cópia de shared/
-├── figma/
-│   ├── tipografia-semantica-agente.md versão condensada, texto único, para o agente do Figma
-│   └── espacamento-semantico.md   idem, para espaçamento (~900 palavras)
-├── dist/                          pacotes .skill (gerados, fora do git; anexados a cada release)
-├── .claude-plugin/               manifesto do plugin e do marketplace
-├── .changeset/                    mudanças pendentes de release
-└── sync.sh
+<p align="center">
+  <a href="#why">Why</a> ·
+  <a href="#install">Install</a> ·
+  <a href="#usage">Usage</a> ·
+  <a href="#requirements">Requirements</a> ·
+  <a href="CHANGELOG.md">Changelog</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+```console
+$ node skills/tipografia-semantica-codigo/scripts/checar-tipografia.mjs demo.css
+# Tipografia — guardrail
+
+1 arquivos · 1 tokens type-* · 0 bloqueantes · 2 alertas · 0 boas práticas
+
+| ID | Local | Problema | Correção |
+|---|---|---|---|
+| VOL-01 | demo.css:1 | .type-heading-xl: font-size em px (44px) não escala com a preferência do usuário | use 2.75rem |
+| VOL-01 | demo.css:2 | font-size fixo em px (11px) | use rem ou um token --type-* |
 ```
 
-## Fluxo de manutenção
-1. Edite em `shared/`.
-2. Rode `./sync.sh`. Ele copia `shared/` para as `references/` de cada skill (espaçamento só recebe `espacamento*.md`; tipografia não recebe) e gera `dist/*.skill`. Commite as `references/` (o plugin é instalado do git); o `dist/` não vai para o git.
-3. Rode `pnpm changeset` e descreva a mudança. O CI exige um changeset em cada pull request.
-4. Se mudou a taxonomia, os pisos ou a escala de espaço, atualize à mão `figma/tipografia-semantica-agente.md` ou `figma/espacamento-semantico.md`. O sync avisa quando a condensada ficar mais velha que a fonte.
+## Why
 
-## Instalar
-- **Plugin (recomendado):**
-  ```
-  /plugin marketplace add daniloborges/design-skills
-  /plugin install design@design-skills
-  ```
-  Instala as três skills de uma vez.
-- **Só uma skill:** baixe o `.skill` correspondente na [página de releases](https://github.com/daniloborges/design-skills/releases) ou copie a pasta de `skills/` para a pasta de skills do Claude.
-- **Agente do Figma / Figma Make:** crie uma skill e cole ou envie `figma/tipografia-semantica-agente.md`. O agente in-app aceita um texto único, sem pastas. Chame com `/tipografia-semantica` ou `/espacamento-semantico`.
-- **CI:** `node skills/tipografia-semantica-codigo/scripts/checar-tipografia.mjs src/ --figma estilos.json`.
+Design files drift. Text styles end up named after their looks (`Fraunces/Light wght 380`, `Text 14`), spacing variables come from imports (`14_01`, `341_69`), and the code carries a third set of names. Nobody can tell which style a heading should use, or whether the code still matches the file.
 
-## Por que três superfícies
-| Superfície | Formato | Papel |
+This plugin gives both sides one vocabulary: `role/size` for type (`heading/xl`, `body/md`) and `gap/*`, `padding/*`, `layout/*` for spacing. The names are a closed list, so a new style needs a reason. The same names become CSS classes (`.type-heading-xl`), custom properties and DTCG tokens, and a lint script fails the build when the code leaves the list.
+
+The skills are written in Portuguese, and the optional accessibility audit covers Brazilian law (LBI, Lei 10.098, CDC, ANVISA) next to WCAG.
+
+## Install
+
+```
+/plugin marketplace add daniloborges/design-skills
+/plugin install design@design-skills
+```
+
+To install a single skill, download its `.skill` file from the [releases page](https://github.com/daniloborges/design-skills/releases).
+
+The Figma in-app agent takes one text file instead of a folder. Create a skill there and paste [`figma/tipografia-semantica-agente.md`](figma/tipografia-semantica-agente.md) or [`figma/espacamento-semantico.md`](figma/espacamento-semantico.md). Call them with `/tipografia-semantica` and `/espacamento-semantico`.
+
+## Usage
+
+The plugin ships three skills. Each one asks Claude for a staged flow with a stop before anything changes in your file.
+
+| Skill | Use it to | Flow |
 |---|---|---|
-| Skill Claude, frente Figma | Pasta com references e scripts | Auditoria completa e aplicação via MCP |
-| Skill Claude, frente código | Pasta com scripts | Guardrail: o código não diverge do Figma |
-| Agente do Figma | Texto único (~900 palavras) | Revisão rápida dentro do Figma, sem scripts |
+| `tipografia-semantica-figma` | Audit text styles, rename and consolidate them into `role/size` names | inventory → map → approval → apply |
+| `espacamento-semantico-figma` | Organise auto layout gap and padding variables into `Primitives` → `Spacing` | inventory → plan → proposal → preview → apply → archive |
+| `tipografia-semantica-codigo` | Guard code against the type taxonomy and generate tokens from Figma | lint, generate |
 
-Validado em 2026-09-29: inventário e preview rodaram no arquivo do portfólio (página EN, 9 estilos-alvo, 31 textos marcados); `promover`/`aplicar` testados só com DRY_RUN; scripts de código testados com fixtures.
+Ask Claude in plain words, for example "audit the text styles in this Figma file" or "check src/ against the type taxonomy". Both Figma skills show a before-and-after preview on a separate page and change the original file only after you approve.
 
-## Release
-Mergear no `main` com changesets pendentes abre o pull request "Version Packages". Mergear esse pull request cria a tag, a GitHub Release e anexa os `.skill`. Mudanças: ver [CHANGELOG.md](CHANGELOG.md).
+The code skill also runs without Claude:
 
-## Licença
-Apache-2.0.
+```bash
+# Lint CSS, SCSS, JSON, HTML, JSX, Vue or Svelte. Exit code 1 on a blocking finding, so it fits CI.
+node skills/tipografia-semantica-codigo/scripts/checar-tipografia.mjs src/ --figma estilos.json
 
-## Ver também
-- [AGENTS.md](AGENTS.md) — mapa para agentes.
+# Generate CSS (rem) and DTCG tokens from the Figma text styles
+node skills/tipografia-semantica-codigo/scripts/gerar-tokens.mjs estilos.json --out tipografia
+```
+
+`estilos.json` is the output of `figma_get_text_styles` from figma-console, or an array of `{name, fontFamily, fontStyle, fontSize, lineHeight, letterSpacing, textCase}`.
+
+Names carry over between Figma and code:
+
+| Figma | CSS class | Custom properties | DTCG |
+|---|---|---|---|
+| `heading/xl` | `.type-heading-xl` | `--type-heading-xl-*` | `type.heading.xl` |
+| `heading/xl-emphasis` | `.type-heading-xl-emphasis` | `--type-heading-xl-emphasis-*` | `type.heading.xl.emphasis` |
+
+### Known limits
+
+- The spacing modes that bind the original file to the new variables (`aplicar`), archive old ones (`arquivar`) and discard a preview (`descartar`) have not run against a real file yet. `inventario`, `plano` and `preview` have.
+- `var()` and `calc()` values are not resolved by the linter. Check those by hand.
+
+## Requirements
+
+- Claude Code with the plugin system.
+- A Figma connection for the two Figma skills: [figma-console-mcp](https://github.com/southleft/figma-console-mcp) or another MCP that can run Plugin API code. [`tools/figma-run`](tools/figma-run) is an optional runner for figma-console only.
+- Node.js 18 or later for the scripts. They have no dependencies.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE).

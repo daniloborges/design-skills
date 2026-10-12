@@ -11,10 +11,17 @@
     {
       "name": "design",
       "source": "./",
-      "description": "Tipografia e espaçamento semânticos: Figma e código coerentes, com checagens de acessibilidade.",
+      "description": "Skills de tipografia e espaçamento semânticos: mapeiam estilos de texto e variáveis de auto layout do Figma em nomes semânticos, mantêm Figma e código coerentes e checam acessibilidade.",
       "version": "0.1.0",
       "category": "development",
-      "keywords": ["figma", "design-system", "typography", "spacing", "tokens"]
+      "keywords": [
+        "figma",
+        "design-system",
+        "typography",
+        "spacing",
+        "tokens",
+        "accessibility"
+      ]
     }
   ]
 }
