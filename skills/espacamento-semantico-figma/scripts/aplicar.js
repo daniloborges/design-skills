@@ -38,7 +38,7 @@ const DECISOES = {
 };
 const ARQUIVAR = { prefixes: ['item spacing/'] };
 const DOC = {
-  projeto: 'daniloborg.es',                // aparece no título do frame
+  projeto: 'meu-projeto',                 // aparece no título do frame
   frameName: '📖 Inventário de espaçamento',
   pageName: 'Design System',               // destino do frame ao aprovar ('aplicar')
   previewSection: 'Preview — mudanças',    // seção só do preview; sai do frame ao aprovar

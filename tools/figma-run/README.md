@@ -22,7 +22,7 @@ cd tools/figma-run && npm install
 # o plugin Desktop Bridge precisa estar aberto no arquivo
 node figma-run.mjs ../../skills/tipografia-semantica-figma/scripts/inventario-tipografia.js \
   --set page="📖 Tipografia" --set frame="📖 Inventário de tipografia" --set title="Tipografia — Meu projeto" \
-  --file "Portifolio" --timeout 120000
+  --file "Meu arquivo" --timeout 120000
 ```
 
 | Flag | O quê |
