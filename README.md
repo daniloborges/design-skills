@@ -44,11 +44,11 @@ O plugin traz três skills. Cada uma segue etapas e para antes de mudar qualquer
 
 | Skill | Serve para | Fluxo |
 |---|---|---|
-| `tipografia-semantica-figma` | Auditar estilos de texto, renomear e consolidar em nomes `papel/tamanho` | inventário → mapa → aprovação → aplicação |
-| `espacamento-semantico-figma` | Organizar as variáveis de gap e padding do auto layout em `Primitives` → `Spacing` | inventário → plano → proposta → preview → aplicar → arquivar |
-| `tipografia-semantica-codigo` | Proteger o código contra a taxonomia de texto e gerar tokens a partir do Figma | lint, geração |
+| `/design:tipografia-semantica-figma` | Auditar estilos de texto, renomear e consolidar em nomes `papel/tamanho` | inventário → mapa → aprovação → aplicação |
+| `/design:espacamento-semantico-figma` | Organizar as variáveis de gap e padding do auto layout em `Primitives` → `Spacing` | inventário → plano → proposta → preview → aplicar → arquivar |
+| `/design:tipografia-semantica-codigo` | Proteger o código contra a taxonomia de texto e gerar tokens a partir do Figma | lint, geração |
 
-Peça ao Claude em linguagem natural, por exemplo "audite os estilos de texto deste arquivo do Figma" ou "confira src/ contra a taxonomia de tipografia". As duas skills do Figma mostram um preview ANTES × DEPOIS numa página separada e só alteram o arquivo original depois da sua aprovação.
+Chame pelo nome, por exemplo `/design:tipografia-semantica-figma`, ou peça em linguagem natural: "audite os estilos de texto deste arquivo do Figma" ou "confira src/ contra a taxonomia de tipografia". As duas skills do Figma mostram um preview ANTES × DEPOIS numa página separada e só alteram o arquivo original depois da sua aprovação.
 
 A skill de código também roda sem o Claude:
 
