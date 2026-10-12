@@ -1,0 +1,8 @@
+{
+  "name": "figma-run",
+  "version": "1.0.0",
+  "description": "Executa scripts da Plugin API no Figma Desktop via plugin Desktop Bridge do figma-console, sem passar pelo MCP.",
+  "type": "module",
+  "bin": { "figma-run": "figma-run.mjs" },
+  "dependencies": { "ws": "^8.18.0" }
+}
