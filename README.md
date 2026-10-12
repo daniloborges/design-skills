@@ -17,17 +17,7 @@ Um plugin do Claude Code que renomeia <code>Text 14</code> para <code>body/md</c
   <a href="CONTRIBUTING.md">Contribuir</a>
 </p>
 
-```console
-$ node skills/tipografia-semantica-codigo/scripts/checar-tipografia.mjs demo.css
-# Tipografia — guardrail
-
-1 arquivos · 1 tokens type-* · 0 bloqueantes · 2 alertas · 0 boas práticas
-
-| ID | Local | Problema | Correção |
-|---|---|---|---|
-| VOL-01 | demo.css:1 | .type-heading-xl: font-size em px (44px) não escala com a preferência do usuário | use 2.75rem |
-| VOL-01 | demo.css:2 | font-size fixo em px (11px) | use rem ou um token --type-* |
-```
+<p align="center"><img alt="Frames de inventário gerados pelas skills: espaçamento (primitivos, gap, padding) e tipografia (fontes, display, heading)" src="assets/preview.png" width="900"></p>
 
 ## Por quê
 
@@ -68,6 +58,20 @@ node skills/tipografia-semantica-codigo/scripts/checar-tipografia.mjs src/ --fig
 
 # Gera CSS (rem) e tokens DTCG a partir dos estilos de texto do Figma
 node skills/tipografia-semantica-codigo/scripts/gerar-tokens.mjs estilos.json --out tipografia
+```
+
+Exemplo de saída do lint, num CSS com dois `font-size` em px:
+
+```console
+$ node skills/tipografia-semantica-codigo/scripts/checar-tipografia.mjs demo.css
+# Tipografia — guardrail
+
+1 arquivos · 1 tokens type-* · 0 bloqueantes · 2 alertas · 0 boas práticas
+
+| ID | Local | Problema | Correção |
+|---|---|---|---|
+| VOL-01 | demo.css:1 | .type-heading-xl: font-size em px (44px) não escala com a preferência do usuário | use 2.75rem |
+| VOL-01 | demo.css:2 | font-size fixo em px (11px) | use rem ou um token --type-* |
 ```
 
 `estilos.json` é a saída de `figma_get_text_styles` do figma-console, ou um array de `{name, fontFamily, fontStyle, fontSize, lineHeight, letterSpacing, textCase}`.
