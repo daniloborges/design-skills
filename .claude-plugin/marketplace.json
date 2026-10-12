@@ -1,0 +1,20 @@
+{
+  "name": "design-skills",
+  "owner": {
+    "name": "Danilo Borges",
+    "url": "https://github.com/daniloborges"
+  },
+  "metadata": {
+    "description": "Skills de tipografia e espaçamento semânticos para Figma e código."
+  },
+  "plugins": [
+    {
+      "name": "design",
+      "source": "./",
+      "description": "Tipografia e espaçamento semânticos: Figma e código coerentes, com checagens de acessibilidade.",
+      "version": "0.1.0",
+      "category": "development",
+      "keywords": ["figma", "design-system", "typography", "spacing", "tokens"]
+    }
+  ]
+}

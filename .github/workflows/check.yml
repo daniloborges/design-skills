@@ -1,0 +1,34 @@
+name: check
+
+# O que o merge precisa cumprir: references/ em dia com shared/, plugin válido,
+# scripts de código testados e um changeset em cada pull request.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: references/ em dia com shared/
+        run: |
+          ./sync.sh
+          git diff --exit-code -- skills || { echo "::error::skills/*/references diverge de shared/ — rode ./sync.sh e commite"; exit 1; }
+      - name: Checagem de tipografia (fixtures)
+        run: |
+          if ls test/*.test.mjs >/dev/null 2>&1; then node --test test/; else echo "sem testes ainda"; fi
+      - name: Todo pull request carrega um changeset
+        if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
+        run: npx changeset status --since origin/${{ github.base_ref }}

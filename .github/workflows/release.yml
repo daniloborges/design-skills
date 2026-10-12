@@ -1,0 +1,44 @@
+name: release
+
+# Nada vai para um registro. A cada push no main com changesets pendentes, abre (ou atualiza) o
+# pull request "Version Packages", cujo `npm run version` aplica os changesets e sincroniza a versão
+# em plugin.json e marketplace.json. Mergear esse pull request é a release: o job cria a tag e a
+# GitHub Release, gera os .skill (nunca commitados) e os anexa.
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - id: changesets
+        uses: changesets/action@v1
+        with:
+          version: npm run version
+          publish: npx changeset tag
+          title: Version Packages
+          commit: Version Packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Empacotar e anexar os .skill
+        if: steps.changesets.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v$(node -p "require('./package.json').version")"
+          ./sync.sh
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
+          gh release upload "$TAG" dist/*.skill --clobber
