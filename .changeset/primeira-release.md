@@ -2,4 +2,4 @@
 "design-skills": minor
 ---
 
-First release of the plugin: semantic typography skills (Figma and code) and a semantic spacing skill (Figma).
+Primeira release do plugin: skills de tipografia semântica (Figma e código) e de espaçamento semântico (Figma).

@@ -1,26 +1,26 @@
-# Contributing
+# Contribuir
 
-## Layout
+## Estrutura
 
-| Path | Role |
+| Caminho | Papel |
 |---|---|
-| `shared/` | Single source of truth: taxonomy, spacing, platforms, legal audit. Edit only here. |
-| `skills/<skill>/` | One skill: `SKILL.md` and `scripts/`. `references/` is a generated copy of `shared/`. |
-| `figma/` | Condensed single-file versions for the Figma in-app agent. Maintained by hand. |
-| `tools/figma-run/` | Optional runner for figma-console, outside the plugin. |
-| `.claude-plugin/` | Plugin and marketplace manifests. The version is synced, never hand-edited. |
+| `shared/` | Fonte única de verdade: taxonomia, espaçamento, plataformas, auditoria legal. Edite só aqui. |
+| `skills/<skill>/` | Uma skill: `SKILL.md` e `scripts/`. `references/` é cópia gerada de `shared/`. |
+| `figma/` | Versões condensadas, em texto único, para o agente do Figma. Mantidas à mão. |
+| `tools/figma-run/` | Executor opcional para o figma-console, fora do plugin. |
+| `.claude-plugin/` | Manifestos do plugin e do marketplace. A versão é sincronizada, nunca editada à mão. |
 
-## Workflow
+## Fluxo
 
-1. Edit `shared/`.
-2. Run `./sync.sh`. It copies `shared/` into each skill's `references/` (spacing skills receive only `espacamento*.md`; typography skills receive none of them) and builds `dist/*.skill`. Commit `references/`, because the plugin installs from git. `dist/` stays out of git.
-3. If the taxonomy, size floors or spacing scale changed, update `figma/tipografia-semantica-agente.md` or `figma/espacamento-semantico.md` by hand. The sync warns when the condensed file is older than its source.
-4. Run `pnpm changeset` and describe the change. Every pull request needs one; CI checks it.
+1. Edite `shared/`.
+2. Rode `./sync.sh`. Ele copia `shared/` para as `references/` de cada skill (as de espaçamento recebem só `espacamento*.md`; as de tipografia não recebem nenhum) e gera `dist/*.skill`. Commite as `references/`, porque o plugin é instalado a partir do git. O `dist/` fica fora do git.
+3. Se mudou a taxonomia, os pisos de tamanho ou a escala de espaço, atualize à mão `figma/tipografia-semantica-agente.md` ou `figma/espacamento-semantico.md`. O sync avisa quando a versão condensada fica mais velha que a fonte.
+4. Rode `pnpm changeset` e descreva a mudança. Todo pull request precisa de um; o CI confere.
 
-CI also runs `./sync.sh` and fails when `skills/*/references` differ from `shared/`.
+O CI também roda `./sync.sh` e falha quando `skills/*/references` diverge de `shared/`.
 
 ## Release
 
-A merge to `main` with pending changesets opens the "Version Packages" pull request. Merging that pull request bumps the version in `package.json`, `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, creates the tag and the GitHub Release, and attaches the three `.skill` files.
+Um merge no `main` com changesets pendentes abre o pull request "Version Packages". Mergear esse pull request sobe a versão em `package.json`, `.claude-plugin/plugin.json` e `.claude-plugin/marketplace.json`, cria a tag e a GitHub Release e anexa os três arquivos `.skill`.
 
-Validate the manifests locally with `claude plugin validate .`. It warns that `CLAUDE.md` at the plugin root is not loaded as context. That is expected: the file serves people working on this repository, and installed users never see it.
+Valide os manifestos localmente com `claude plugin validate .`. Ele avisa que o `CLAUDE.md` na raiz do plugin não é carregado como contexto. Isso é esperado: o arquivo serve a quem trabalha neste repositório, e quem instala o plugin nunca o vê.
