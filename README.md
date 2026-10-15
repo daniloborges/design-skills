@@ -34,6 +34,21 @@ A auditoria opcional de acessibilidade cobre a legislação brasileira (LBI, Lei
 /plugin install design@design-skills
 ```
 
+### Outros agentes
+
+O plugin carrega só skills (sem subagentes, hooks nem servidor MCP), então todo o conteúdo viaja. Nenhuma skill define `disable-model-invocation`, e por isso nenhuma precisa de `agents/openai.yaml`.
+
+| Canal | Comando | Skills | Subagentes | Hooks | MCP |
+|---|---|---|---|---|---|
+| Claude Code | `/plugin marketplace add daniloborges/design-skills` | sim | não há | não há | não há |
+| Antigravity | `agy plugin install https://github.com/daniloborges/design-skills` | sim | não há | não há | não há |
+| Codex | `codex plugin marketplace add daniloborges/design-skills` | sim | não há | não há | não há |
+| Copilot CLI | `copilot plugin install daniloborges/design-skills` | sim | não há | não há | não há |
+| Cursor | importe o repositório como marketplace | sim | não há | não há | não há |
+| Outros (`npx skills add`) | `npx skills add daniloborges/design-skills` | sim | não há | não há | não há |
+
+Só o Claude Code e o `agy plugin validate` foram executados; Codex, Copilot CLI e Cursor foram conferidos na documentação de 14/10/2026, sem rodar o cliente.
+
 Para instalar uma skill só, baixe o arquivo `.skill` na [página de releases](https://github.com/daniloborges/design-skills/releases).
 
 O agente do Figma aceita um texto único, sem pastas. Crie uma skill lá e cole [`figma/tipografia-semantica-agente.md`](figma/tipografia-semantica-agente.md) ou [`figma/espacamento-semantico.md`](figma/espacamento-semantico.md). Chame com `/tipografia-semantica` e `/espacamento-semantico`.
