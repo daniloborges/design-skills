@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "private": true,
   "license": "Apache-2.0",
-  "description": "Claude Code plugin — versioned here so changesets can bump it; the version is synced into .claude-plugin/plugin.json and the marketplace entry.",
+  "description": "Claude Code plugin — versioned here so changesets can bump it; the version is synced into plugin.json, .claude-plugin/plugin.json and the marketplace entry.",
   "scripts": {
     "version": "changeset version && node scripts/sync-versions.mjs",
     "sync": "./sync.sh"

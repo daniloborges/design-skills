@@ -27,6 +27,8 @@ jobs:
         run: |
           ./sync.sh
           git diff --exit-code -- skills || { echo "::error::skills/*/references diverge de shared/ — rode ./sync.sh e commite"; exit 1; }
+      - name: Manifestos e catálogos em dia com package.json
+        run: node scripts/sync-versions.mjs --check
       - name: Checagem de tipografia (fixtures)
         run: |
           if ls test/*.test.mjs >/dev/null 2>&1; then node --test test/; else echo "sem testes ainda"; fi
