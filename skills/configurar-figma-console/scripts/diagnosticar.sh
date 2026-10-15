@@ -30,8 +30,10 @@ if command -v claude >/dev/null 2>&1; then
     escopo=$(printf '%s' "$saida" | sed -n -E 's/.*Scope: *([A-Za-z]+).*/\1/p' | head -1)
     if [ -n "$escopo" ]; then ok "escopo: $escopo"; else falha "escopo ilegível — a saída da CLI mudou; leia o bloco acima"; fi
     token=$(printf '%s' "$saida" | sed -n -E 's/.*FIGMA_ACCESS_TOKEN=(figd_[A-Za-z0-9_-]+).*/\1/p' | head -1)
-    if [ -z "$token" ]; then
-      falha "FIGMA_ACCESS_TOKEN ausente ou sem o prefixo figd_"; marca "TOKEN"
+    if [ -z "$token" ] && printf '%s' "$saida" | grep -q 'FIGMA_ACCESS_TOKEN='; then
+      falha "FIGMA_ACCESS_TOKEN sem o prefixo figd_"; marca "TOKEN"
+    elif [ -z "$token" ]; then
+      ok "sem token (padrão): o plugin funciona; comentários, versões e biblioteca publicada ficam de fora"
     elif command -v curl >/dev/null 2>&1; then
       # Prova o token na API REST do Figma. O valor vai só no cabeçalho, nunca na saída.
       resp=$(curl -s -m 10 -w '\n%{http_code}' -H "X-Figma-Token: $token" https://api.figma.com/v1/me 2>/dev/null)
@@ -39,7 +41,7 @@ if command -v claude >/dev/null 2>&1; then
       case "$codigo" in
         200) ok "token aceito pela API do Figma" ;;
         401|403) msg=$(printf '%s' "$resp" | sed -n -E 's/.*"err":"([^"]*)".*/\1/p' | head -1)
-                 falha "token recusado pela API do Figma ($codigo${msg:+: $msg}) — gere outro"; marca "TOKEN" ;;
+                 falha "token recusado pela API do Figma ($codigo${msg:+: $msg}) — gere outro ou registre sem token"; marca "TOKEN" ;;
         *) aviso "não consegui testar o token na API do Figma (HTTP ${codigo:-sem resposta})" ;;
       esac
     else

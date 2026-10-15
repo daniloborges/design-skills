@@ -47,7 +47,7 @@ O plugin traz quatro skills. As três de tipografia e espaçamento seguem etapas
 | `/design:tipografia-semantica-figma` | Auditar estilos de texto, renomear e consolidar em nomes `papel/tamanho` | inventário → mapa → aprovação → aplicação |
 | `/design:espacamento-semantico-figma` | Organizar as variáveis de gap e padding do auto layout em `Primitives` → `Spacing` | inventário → plano → proposta → preview → aplicar → arquivar |
 | `/design:tipografia-semantica-codigo` | Proteger o código contra a taxonomia de texto e gerar tokens a partir do Figma | lint, geração |
-| `/design:configurar-figma-console` | Instalar, diagnosticar ou ensinar a usar a ligação com o Figma Desktop pelo figma-console MCP | modos `instalar`, `ajuda`, `auditoria` |
+| `/design:configurar-figma-console` | Instalar, diagnosticar ou ensinar a usar a ligação com o Figma Desktop pelo figma-console MCP | modos `instalar` (sem token), `ajuda`, `token`, `auditoria` |
 
 Chame pelo nome, por exemplo `/design:tipografia-semantica-figma`, ou peça em linguagem natural: "audite os estilos de texto deste arquivo do Figma" ou "confira src/ contra a taxonomia de tipografia". As duas skills do Figma mostram um preview ANTES × DEPOIS numa página separada e só alteram o arquivo original depois da sua aprovação.
 

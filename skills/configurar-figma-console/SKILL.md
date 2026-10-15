@@ -1,7 +1,7 @@
 ---
 name: configurar-figma-console
-description: Instala, confere, repara ou ensina a usar a ligação do Claude Code com o Figma Desktop pelo figma-console MCP — token do Figma, registro do servidor, plugin Desktop Bridge e o que pedir depois. Use ao configurar o figma-console numa máquina nova, quando as ferramentas figma_* não aparecem, quando figma_get_status diz que não há conexão, quando o plugin mostra "MCP scanning" ou "No MCP server found", quando o token expirou, quando o servidor só aparece num projeto, ou quando a pessoa não sabe ligar o plugin no Figma ou o que pedir. Modos `instalar` (padrão), `ajuda` e `auditoria`.
-argument-hint: "[instalar|ajuda|auditoria]"
+description: Instala, confere, repara ou ensina a usar a ligação do Claude Code com o Figma Desktop pelo figma-console MCP — registro do servidor, plugin Desktop Bridge, token opcional e o que pedir depois. Use ao configurar o figma-console numa máquina nova, quando as ferramentas figma_* não aparecem, quando figma_get_status diz que não há conexão, quando o plugin mostra "MCP scanning" ou "No MCP server found", quando o token expirou ou a pessoa quer comentários, histórico de versões ou biblioteca publicada, quando o servidor só aparece num projeto, ou quando a pessoa não sabe ligar o plugin no Figma ou o que pedir. Modos `instalar` (padrão, sem token), `ajuda`, `token` e `auditoria`.
+argument-hint: "[instalar|ajuda|token|auditoria]"
 allowed-tools:
   - Bash(sh *diagnosticar.sh)
   - Bash(claude mcp get figma-console)
@@ -29,11 +29,13 @@ As skills de Figma deste plugin (`tipografia-semantica-figma`, `espacamento-sema
 
 | Modo | Quando | Passos |
 |---|---|---|
-| `instalar` (padrão) | máquina nova, token novo, algo quebrou | 1 → 2 → 3 → 4 → 5 → 6, pulando o que o veredito do Passo 1 já mostra pronto |
+| `instalar` (padrão) | máquina nova, algo quebrou | 1 → 3 → 4 → 5 → 6 → 7, sem token, pulando o que o veredito do Passo 1 já mostra pronto |
+| `token` | a pessoa pede o token, ou uma ferramenta da API REST falhou | 2 → 3 com `--com-token` → 6 |
 | `ajuda` | a ligação existe, mas a pessoa não sabe ligar o plugin no Figma ou o que pedir | 1, depois 5 e 6, depois [references/uso.md](references/uso.md) |
 | `auditoria` | só saber o estado | 1, e o relato descrito nele |
 
-O modo chega como argumento (`/design:configurar-figma-console ajuda`). Sem argumento, escolha pelo pedido: "como uso", "como ligo no Figma", "o que posso pedir" é `ajuda`; o resto é
+O modo chega como argumento (`/design:configurar-figma-console ajuda`). Sem argumento, escolha pelo pedido: "como uso", "como ligo no Figma", "o que posso pedir" é `ajuda`; comentários,
+histórico de versões, biblioteca publicada ou um erro 401/403 é `token`; o resto é
 `instalar`.
 
 ## A forma correta
@@ -41,8 +43,8 @@ O modo chega como argumento (`/design:configurar-figma-console ajuda`). Sem argu
 | Camada | Estado esperado |
 |---|---|
 | Node | 18 ou superior no `PATH` que o Claude Code usa |
-| Token | personal access token do Figma, prefixo `figd_`, com os escopos **File content** (Read), **File versions** (Read), **Variables** (Read) e **Comments** (Read and write) |
-| Registro | servidor `figma-console`, comando `npx -y figma-console-mcp@latest`, env `FIGMA_ACCESS_TOKEN` e `ENABLE_MCP_APPS=true` |
+| Token | **opcional, e ausente por padrão.** Quando existe: personal access token do Figma, prefixo `figd_`, aceito pela API, com os escopos **File content** (Read), **File versions** (Read), **Variables** (Read) e **Comments** (Read and write) |
+| Registro | servidor `figma-console`, comando `npx -y figma-console-mcp@latest`, env `ENABLE_MCP_APPS=true`, e `FIGMA_ACCESS_TOKEN` só no modo `token` |
 | Servidor | escutando numa porta entre 9223 e 9232; ele tenta a 9223 e passa para a seguinte quando ela está ocupada |
 | Plugin | Desktop Bridge importado de `~/.figma-console-mcp/plugin/manifest.json` e rodando no arquivo aberto; o selo mostra `Local · ready` |
 
@@ -74,8 +76,8 @@ linha `também falhou:` lista os vereditos que o primeiro esconde; trate-os na o
 | Veredito | Vá para |
 |---|---|
 | `NODE` | instale o Node 18+ (ou aponte o registro para o binário certo, ver Passo 3) e rode o Passo 1 de novo |
-| `SEM-REGISTRO` | leia a linha `registrado em` e depois o Passo 2 (se não há token à mão) e o Passo 3 |
-| `TOKEN` | token ausente, expirado ou recusado pela API do Figma (o script testa em `api.figma.com/v1/me`): Passo 2, depois Passo 3 |
+| `SEM-REGISTRO` | leia a linha `registrado em` e depois o Passo 3 |
+| `TOKEN` | há um token registrado e a API do Figma o recusou (o script testa em `api.figma.com/v1/me`). Pergunte: registrar de novo sem token (Passo 3, o padrão) ou gerar outro (Passo 2, modo `token`) |
 | `CLI-INESPERADA` | leia a saída crua impressa; a CLI mudou o texto, então use `/mcp` numa sessão para decidir |
 | `SERVIDOR-PARADO` | Passo 4 |
 | `PRONTO-PARA-PLUGIN` | Passo 5 |
@@ -92,7 +94,20 @@ são normais: sessões antigas podem deixar o processo vivo, e o plugin se conec
 linhas `registrado em`, cada `FALHA` e cada `aviso`. Se o escopo é `local` e existe trabalho em outras pastas, diga
 que um registro `user` resolveria, sem fazer a mudança.
 
-## Passo 2 — Token do Figma em mãos
+## Passo 2 — Token do Figma em mãos (só no modo `token`)
+
+**O token é opcional, e a instalação padrão pula este passo.** O plugin Desktop Bridge trabalha no arquivo aberto com
+a sessão do Figma da pessoa, sem token: ler seleção, estilos e variáveis, criar e editar, screenshot. O token liga só
+a API REST do Figma, que cobre o que fica fora do arquivo aberto:
+
+- comentários (`figma_get_comments`, `figma_post_comment`);
+- histórico de versões e o que depende dele (`figma_get_file_versions`, `figma_diff_versions`, `figma_generate_changelog`,
+  `figma_blame_node`);
+- componentes e variáveis de uma biblioteca publicada em outro arquivo;
+- ler um arquivo que não está aberto com o plugin.
+
+Ofereça o token quando a pessoa pedir uma dessas coisas, ou quando uma ferramenta falhar com "FIGMA_ACCESS_TOKEN not
+configured", 401 ou 403. Fora disso, siga sem ele.
 
 **⏸ Ação da pessoa.** Escreva para ela, em passos numerados:
 
@@ -103,7 +118,7 @@ que um registro `user` resolveria, sem fazer a mudança.
 4. Copie o token na hora. O Figma mostra o valor uma única vez, e ele começa com `figd_`.
 5. Guarde o token num gerenciador de senhas; ele não deve ir para chat, e-mail nem arquivo do projeto.
 
-Diga o que vem a seguir: no Passo 3 ela mesma vai colar o token no terminal dela, num script que o pede sem mostrar
+Diga o que vem a seguir: no Passo 3, com `--com-token`, ela mesma vai colar o token no terminal dela, num script que o pede sem mostrar
 na tela, para que o token não passe pela conversa. Se ela colar o token aqui assim mesmo, use-o só no comando manual
 do Passo 3, não o repita em nenhuma resposta e sugira gerar outro depois.
 
@@ -120,16 +135,23 @@ Pergunte o escopo antes de escrever:
 | `local` | `~/.claude.json`, só nesta pasta | o servidor deve existir só neste projeto |
 | `project` | `.mcp.json` versionado | **nunca** com o token dentro; só se o token vier de variável de ambiente fora do git |
 
-**⏸ Ação da pessoa.** Entregue o comando pronto para colar no terminal dela, na pasta do projeto, com o caminho
-absoluto do script e o escopo escolhido:
+**Sem token (padrão), o Claude registra.** O comando não leva segredo, então rode-o na pasta do projeto, depois da
+resposta sobre o escopo:
 
 ```sh
 sh ${CLAUDE_SKILL_DIR}/scripts/registrar.sh <user|local>
 ```
 
-O script pede o token sem eco e recusa o que não começa com `figd_`, sem alterar nada. Ele remove o registro anterior
-do mesmo escopo, registra o servidor e mostra o resultado com o token mascarado. Peça para ela colar aqui a saída, que
-é segura.
+**⏸ Ação da pessoa, só no modo `token`.** Entregue o comando pronto para colar no terminal dela, na pasta do projeto,
+com o caminho absoluto do script:
+
+```sh
+sh ${CLAUDE_SKILL_DIR}/scripts/registrar.sh <user|local> --com-token
+```
+
+Com `--com-token`, o script pede o token sem eco e recusa o que não começa com `figd_`, sem alterar nada. Nos dois
+casos ele remove o registro anterior do mesmo escopo, registra o servidor e mostra o resultado com o token mascarado.
+No modo `token`, peça para ela colar aqui a saída, que é segura.
 
 O script avisa quando sobra um registro `local` depois de um `user`. Os dois juntos funcionam, mas o `local` vence o
 `user` naquela pasta e esconde uma troca de token feita só no `user`; a remoção dele é decisão da pessoa, e o script
@@ -137,11 +159,11 @@ imprime o comando.
 
 **Node instalado por gerenciador de versões (nvm, fnm, asdf).** O Claude Code pode não herdar o `PATH` do shell. O
 sintoma é `Command not found: node` ou `parseArgs not exported from 'node:util'` (Node velho). Passe o caminho
-absoluto do `npx` de um Node 18+ como segundo argumento: `registrar.sh user /caminho/do/node/bin/npx`. O caminho sai
+absoluto do `npx` de um Node 18+ como último argumento: `registrar.sh user /caminho/do/node/bin/npx`. O caminho sai
 de `command -v npx` no shell da pessoa.
 
-**Sem acesso a um terminal**, ou com o token já colado na conversa, o registro manual é este, com `figd_SEU_TOKEN` no
-lugar do token:
+**Sem acesso a um terminal**, ou com o token já colado na conversa, o registro manual é este. Sem token, tire o
+`-e FIGMA_ACCESS_TOKEN=…`; com token, ponha o valor no lugar de `figd_SEU_TOKEN`:
 
 ```sh
 claude mcp remove figma-console -s <escopo>     # só se já existir nesse escopo
@@ -198,10 +220,10 @@ Fora o aviso de atualização, ou as notas de versão do figma-console pedindo, 
 Chame `figma_get_status`. Ele deve mostrar o transporte WebSocket ativo, a porta desta sessão e o arquivo conectado.
 Depois prove a leitura com `figma_get_selection` (peça para a pessoa selecionar algo) ou `figma_search_components`.
 
-**O token se prova à parte.** `Status: ✔ Connected` no `claude mcp get` diz só que o processo subiu: um token falso
-dá o mesmo status. O plugin também funciona sem token. Prove o token com uma ferramenta que chama a API REST do Figma,
+**Com token registrado, ele se prova à parte.** `Status: ✔ Connected` no `claude mcp get` diz só que o processo
+subiu: um token falso dá o mesmo status. Sem token, pule este parágrafo. Prove o token com uma ferramenta que chama a API REST do Figma,
 como `figma_get_comments` ou `figma_get_file_versions` no arquivo aberto. Um erro 401 (`Token has expired`) ou 403
-leva de volta ao Passo 2. O Passo 1 já testa o token, então esta prova confirma o que o diagnóstico disse.
+leva à pergunta do veredito `TOKEN` no Passo 1. O Passo 1 já testa o token, então esta prova confirma o que o diagnóstico disse.
 
 A escrita de teste altera o arquivo da pessoa por um instante, então peça licença antes. Com o sim, passe o conteúdo
 de `${CLAUDE_SKILL_DIR}/scripts/teste-escrita.js` como código ao `figma_execute`. O script cria um frame de 100×100
@@ -209,7 +231,8 @@ longe do conteúdo, lê de volta e apaga, tudo na mesma execução e mesmo quand
 o resultado traz `ok: true`; com `apagado: false`, peça à pessoa para apagar o frame `teste figma-console`. Sem
 licença, relate a escrita como não testada.
 
-Relate à pessoa: o escopo do registro, a porta, o arquivo conectado, se o token foi provado e se a escrita foi testada.
+Relate à pessoa: o escopo do registro, a porta, o arquivo conectado, se há token (e se ele foi provado) e se a escrita foi testada. Sem token, diga em uma linha o que fica de fora e
+que o modo `token` liga essas ferramentas depois.
 
 ## Passo 7 — Pessoa orientada sobre o uso (modo `ajuda`, ou ao fim de `instalar`)
 
@@ -225,7 +248,7 @@ for sobre estilos de texto ou espaçamento.
 - [ ] Cada **⏸ Ação da pessoa** virou instruções numeradas, com o resultado esperado, e a execução esperou a resposta
 - [ ] O escopo do registro foi decidido pela pessoa, e o registro antigo do mesmo nome foi removido
 - [ ] O cliente foi reiniciado depois de cada mudança de registro, antes de qualquer teste
-- [ ] `figma_get_status` confirmou a conexão com o arquivo, e uma chamada à API REST provou o token
+- [ ] `figma_get_status` confirmou a conexão com o arquivo; com token, uma chamada à API REST o provou
 - [ ] A escrita de teste foi feita com licença e desfeita, ou relatada como não testada
 - [ ] A pessoa recebeu os pedidos de exemplo e os sintomas de falha (`ajuda`, e fim de `instalar`)
 

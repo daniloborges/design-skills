@@ -6,7 +6,9 @@ com o prefixo do servidor (`mcp__figma-console__figma_get_status`); abaixo apare
 ## Antes de qualquer pedido
 
 - O Figma Desktop está aberto num arquivo, e o plugin **Figma Desktop Bridge** está rodando nele com o selo
-  `Local · ready`. Sem o plugin, só as ferramentas de leitura pela API REST respondem.
+  `Local · ready`. Quase tudo passa pelo plugin, sem token.
+- As linhas marcadas com **(token)** na tabela usam a API REST do Figma e só funcionam com um token registrado. Sem
+  ele, a ferramenta responde "FIGMA_ACCESS_TOKEN not configured"; ofereça o modo `token` desta skill.
 - Comece a sessão com `figma_get_status`: ele diz a porta, o arquivo conectado e se o transporte está ativo.
 - Para trabalhar sobre algo específico, a pessoa seleciona no Figma antes de pedir; `figma_get_selection` lê a seleção.
 - Ids de nó (`123:456`) valem só para a sessão em que foram lidos. Numa sessão nova, busque de novo
@@ -26,8 +28,8 @@ com o prefixo do servidor (`mcp__figma-console__figma_get_status`); abaixo apare
 | comparar Figma e código | "esse componente bate com o Button.tsx?" | `figma_check_design_parity` |
 | auditar acessibilidade e saúde | "audita o design system" | `figma_audit_design_system`, `figma_audit_component_accessibility`, `figma_lint_design` |
 | documentar um componente | "gera a doc do componente Input" | `figma_generate_component_doc` |
-| histórico | "o que mudou desde a última versão?" | `figma_get_file_versions`, `figma_diff_versions`, `figma_generate_changelog` |
-| comentários | "lista os comentários abertos" | `figma_get_comments`, `figma_post_comment` |
+| histórico **(token)** | "o que mudou desde a última versão?" | `figma_get_file_versions`, `figma_diff_versions`, `figma_generate_changelog` |
+| comentários **(token)** | "lista os comentários abertos" | `figma_get_comments`, `figma_post_comment` |
 | FigJam | "cria stickies com estes itens" | `figjam_create_stickies`, `figjam_create_connector` |
 | depurar um plugin | "mostra o console do plugin" | `figma_get_console_logs`, `figma_watch_console` |
 
