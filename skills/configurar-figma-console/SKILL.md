@@ -75,7 +75,7 @@ linha `também falhou:` lista os vereditos que o primeiro esconde; trate-os na o
 |---|---|
 | `NODE` | instale o Node 18+ (ou aponte o registro para o binário certo, ver Passo 3) e rode o Passo 1 de novo |
 | `SEM-REGISTRO` | leia a linha `registrado em` e depois o Passo 2 (se não há token à mão) e o Passo 3 |
-| `TOKEN` | Passo 2, depois Passo 3 |
+| `TOKEN` | token ausente, expirado ou recusado pela API do Figma (o script testa em `api.figma.com/v1/me`): Passo 2, depois Passo 3 |
 | `CLI-INESPERADA` | leia a saída crua impressa; a CLI mudou o texto, então use `/mcp` numa sessão para decidir |
 | `SERVIDOR-PARADO` | Passo 4 |
 | `PRONTO-PARA-PLUGIN` | Passo 5 |
@@ -200,8 +200,8 @@ Depois prove a leitura com `figma_get_selection` (peça para a pessoa selecionar
 
 **O token se prova à parte.** `Status: ✔ Connected` no `claude mcp get` diz só que o processo subiu: um token falso
 dá o mesmo status. O plugin também funciona sem token. Prove o token com uma ferramenta que chama a API REST do Figma,
-como `figma_get_comments` ou `figma_get_file_versions` no arquivo aberto. Um erro 403 ou de autenticação ali leva de
-volta ao Passo 2.
+como `figma_get_comments` ou `figma_get_file_versions` no arquivo aberto. Um erro 401 (`Token has expired`) ou 403
+leva de volta ao Passo 2. O Passo 1 já testa o token, então esta prova confirma o que o diagnóstico disse.
 
 A escrita de teste altera o arquivo da pessoa por um instante, então peça licença antes. Com o sim, passe o conteúdo
 de `${CLAUDE_SKILL_DIR}/scripts/teste-escrita.js` como código ao `figma_execute`. O script cria um frame de 100×100
@@ -235,8 +235,8 @@ O ponto mais frágil é o parse do `claude mcp get` no script: ele depende do te
 `No MCP server named`). Quando o texto mudar, o veredito vira `CLI-INESPERADA` ou o escopo sai `FALHA escopo
 ilegível`; corrija o padrão no script.
 
-Os nomes de menu do Figma (avatar → Settings → Security, Plugins → Development) e o texto do selo do plugin vêm da
-documentação do figma-console e ainda não foram conferidos numa instalação feita por esta skill do começo ao fim.
-Corrija o passo que errar.
+O Passo 6 já rodou contra um Figma real, e os Passos 2 e 5 ainda não: os nomes de menu (avatar → Settings → Security,
+Plugins → Development) e o texto do selo vêm da documentação do figma-console. Corrija o passo que errar na primeira
+instalação do zero.
 
 Verificado em: figma-console-mcp 1.40.9, Claude Code 2.1.x, macOS, 2026-10-14.
