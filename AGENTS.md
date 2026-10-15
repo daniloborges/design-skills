@@ -1,6 +1,6 @@
 # design-skills
 
-Plugin `design` do Claude Code: três skills de estilos de texto e variáveis de espaçamento semânticos, no Figma e no código. Skills, scripts e documentação ficam em português.
+Plugin `design` do Claude Code: três skills de estilos de texto e variáveis de espaçamento semânticos, no Figma e no código, e uma (`configurar-figma-console`) que liga o Claude Code ao Figma Desktop. Esta última não recebe `references/` do `sync.sh`. Skills, scripts e documentação ficam em português.
 
 ## Estrutura
 
