@@ -1,6 +1,6 @@
 {
   "name": "design",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Skills de tipografia e espaçamento semânticos: mapeiam estilos de texto e variáveis de auto layout do Figma em nomes semânticos, mantêm Figma e código coerentes e checam acessibilidade.",
   "author": {
     "name": "Danilo Borges",
