@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 for skill in skills/*/; do
+  case "$skill" in *configurar-figma-console*) continue ;; esac  # não usa a taxonomia
   rm -rf "${skill}references"
   mkdir -p "${skill}references"
   cp -R shared/. "${skill}references/"
