@@ -42,10 +42,14 @@ else
 fi
 unset token
 
-echo "registrado no escopo $escopo:"
-claude mcp get figma-console 2>&1 | sed -E 's/(figd_)[A-Za-z0-9_-]+/\1***/g; s/^/  /'
-if [ "$escopo" = user ] && claude mcp get figma-console 2>&1 | grep -q 'Scope: Local'; then
-  echo "atenção: esta pasta ainda tem um registro local, que vence o user aqui."
-  echo "remova com: claude mcp remove figma-console -s local"
+efetivo=$(claude mcp get figma-console 2>&1 | sed -E 's/(figd_)[A-Za-z0-9_-]+/\1***/g')
+case "$escopo" in user) esperado='Scope: User' ;; local) esperado='Scope: Local' ;; esac
+if printf '%s' "$efetivo" | grep -q "$esperado"; then
+  echo "registrado no escopo $escopo:"
+  printf '%s\n' "$efetivo" | sed 's/^/  /'
+else
+  echo "registrado no escopo $escopo, mas nesta pasta vale outro registro, que vence o $escopo:"
+  printf '%s\n' "$efetivo" | sed 's/^/  /'
+  [ "$escopo" = user ] && echo "para usar o user aqui, remova o local: claude mcp remove figma-console -s local"
 fi
 echo "Agora reinicie o Claude Code e avise o Claude."
