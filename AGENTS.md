@@ -27,6 +27,7 @@ Plugin `design` do Claude Code: três skills de estilos de texto e variáveis de
 |---|---|
 | Nomes de texto, faixas de tamanho, pisos | `shared/taxonomia.md` |
 | Escala de espaçamento e regras de encaixe | `shared/espacamento.md` |
+| Modos Desktop × Mobile, comuns a texto e espaço (uma chave só, desktop exato, verificação) | `shared/modos.md`; o `sync.sh` o copia também para a skill de espaçamento, que fora dele só recebe `espacamento*` |
 | Auditoria opcional de compliance brasileiro | `shared/legal/` |
 | Checagens do lint e seus IDs | tabela em `skills/tipografia-semantica-codigo/SKILL.md`, implementadas em `scripts/checar-tipografia.mjs` |
 | Fluxo de release | `.github/workflows/release.yml`; passos humanos em `CONTRIBUTING.md` |

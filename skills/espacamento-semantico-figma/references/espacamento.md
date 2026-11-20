@@ -85,6 +85,25 @@ Comece com um modo chamado `Default` (renomeie `Mode 1`). Só crie mais de um co
 - **Breakpoint:** `Desktop · Tablet · Mobile`, quando o espaçamento muda por tela.
 Os nomes dos tokens não mudam entre modos; só os valores dos primitivos referenciados.
 
+### Modo de breakpoint (Desktop × Mobile)
+
+Num arquivo com tela mobile, `Spacing` ganha o modo `Mobile`, e cada semântico aponta para outro primitivo nele. Nenhum primitivo novo é criado. Onde o modo mora, a regra das duas chaves e a verificação estão em `modos.md`.
+
+| Token | Desktop | Mobile |
+|---|---|---|
+| `gap`/`padding` `3xs` · `2xs` · `xs` · `sm` · `md` | 2 · 4 · 8 · 12 · 16 | iguais |
+| `gap`/`padding` `lg` | 24 | 16 |
+| `gap`/`padding` `xl` | 32 | 24 |
+| `gap`/`padding` `2xl` | 48 | 32 |
+| `layout/sm` | 64 | 48 |
+| `layout/md` | 80 | 48 |
+| `layout/lg` | 96 | 64 |
+| `layout/xl` | 128 | 80 |
+
+- O ritmo interno de um componente (até 16 px) fica igual; o respiro entre blocos e seções encolhe.
+- `Desktop` continua o primeiro modo da coleção, e o modo `Desktop` não muda de valor.
+- **Só nós ligados respondem.** Num arquivo importado (html.to.design), a maior parte do gap e do padding costuma estar solta. Conte ligados × soltos no frame mobile antes de prometer o resultado, e ofereça o fluxo de aplicar desta skill para os soltos.
+
 ## Frame de legenda (documentação)
 Todo preview gera o frame **📖 Inventário de espaçamento**, no mesmo desenho do inventário de tipografia (frame branco de 1622 px, padding 80, gap 64, título Inter Bold 56, seções Inter Bold 32). Ao aprovar, ele vai para a página **`Design System`** (criada se faltar).
 
