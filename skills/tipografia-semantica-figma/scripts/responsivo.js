@@ -17,12 +17,13 @@
 // ── Configuração ────────────────────────────────────────────────────────────
 const _A = (typeof ARGS !== 'undefined' && ARGS) || {};
 const DRY_RUN = _A.dryRun ?? true;
-const COLLECTION = _A.collection ?? null;   // nome ou id; null = a primeira coleção com os dois modos, senão cria 'Viewport'
+const COLLECTION = _A.collection ?? null;   // nome ou id; null = a que já tem type/*, senão a primeira com os dois modos fora do espaço, senão cria 'Viewport'
 const DESKTOP = _A.desktop ?? 'Desktop';
 const MOBILE_MODE = _A.mobileMode ?? 'Mobile';
 const MOBILE = _A.mobile ?? {};             // { 'heading/xl': [44, 44] } → [tamanho, entrelinha] mobile; ausente = igual ao desktop
 const SET_MODE = _A.setMode ?? {};          // { '<id do frame>': 'Mobile' } → modo explícito nesses frames
-const FRAMES = _A.frames ?? 'auto';         // ids de frames para contar textos e conferir; 'auto' = frames da página com até 480 px ou com um modo 'Mobile' explícito
+const FRAMES = _A.frames ?? 'auto';         // ids de frames para contar textos e conferir; 'auto' = telas em pé de 320 a 480 px de largura, ou com um modo 'Mobile' explícito
+const PAGE = _A.page ?? null;               // nome da página onde procurar os frames; null = a página aberta
 const VERIFY = _A.verify ?? null;           // ids de frames para conferir o valor resolvido depois de aplicar; null = os de FRAMES
 
 // ── Auxiliares ──────────────────────────────────────────────────────────────
@@ -32,8 +33,8 @@ const r2 = x => Math.round(x * 100) / 100;
 const even = x => Math.round(x / 2) * 2;
 const suggest = (fs, lh) => {
   if (fs <= 16) return [fs, lh];
-  const m = even(16 + Math.pow(fs - 16, 0.8));
-  return [m, Math.max(even(m * (lh / fs)), m)];
+  const m = Math.min(even(16 + Math.pow(fs - 16, 0.8)), fs);  // o arredondamento para par nunca sobe acima do desktop
+  return [m, Math.min(Math.max(even(m * (lh / fs)), m), lh)];
 };
 const px = (s, k) => {
   const v = s[k];
@@ -45,7 +46,17 @@ const px = (s, k) => {
 // ── Coleção ─────────────────────────────────────────────────────────────────
 const cols = await figma.variables.getLocalVariableCollectionsAsync();
 const hasModes = c => [DESKTOP, MOBILE_MODE].every(m => c.modes.some(x => x.name === m));
-let col = COLLECTION ? cols.find(c => c.id === COLLECTION || c.name === COLLECTION) : cols.find(hasModes);
+// Sem `collection`: primeiro a coleção que já guarda variáveis type/*; senão a primeira com os dois modos que não seja
+// de espaço (Spacing/Primitives, ou só com gap/padding/layout), porque o espaçamento também ganha Desktop/Mobile.
+const typeCols = new Set(), spaceCols = new Set();
+for (const c of cols) for (const id of c.variableIds) {
+  const v = await figma.variables.getVariableByIdAsync(id);
+  if (v.name.startsWith('type/')) typeCols.add(c.id);
+  if (/^(gap|padding|layout|space)\//.test(v.name)) spaceCols.add(c.id);
+}
+let col = COLLECTION
+  ? cols.find(c => c.id === COLLECTION || c.name === COLLECTION)
+  : cols.find(c => typeCols.has(c.id)) ?? cols.find(c => hasModes(c) && !spaceCols.has(c.id));
 const outras = cols.filter(c => c !== col && hasModes(c)).map(c => c.name);
 const avisos = [];
 if (col && col.modes[0].name !== DESKTOP) avisos.push(`"${col.name}": o primeiro modo é "${col.modes[0].name}", não ${DESKTOP}; frames sem modo explícito cairão nele`);
@@ -60,6 +71,12 @@ for (const s of styles) {
   if (!groups[g]) groups[g] = [];
   groups[g].push(s);
 }
+// Numa coleção que já tem o modo Mobile, o valor de partida é o Mobile de hoje, nunca o de desktop:
+// rodar de novo sem `mobile` repara as ligações e mantém os valores.
+const existentes = {};
+const mobId = col?.modes.find(m => m.name === MOBILE_MODE)?.modeId;
+if (col) for (const id of col.variableIds) { const v = await figma.variables.getVariableByIdAsync(id); existentes[v.name] = v; }
+const hoje = name => { const val = mobId && existentes[name]?.valuesByMode[mobId]; return typeof val === 'number' ? val : undefined; };
 const bloqueios = [], plano = [], jobs = [];
 for (const [g, ss] of Object.entries(groups)) {
   const fs = ss[0].fontSize, lh = px(ss[0], 'lineHeight');
@@ -71,25 +88,30 @@ for (const [g, ss] of Object.entries(groups)) {
   const lss = ss.map(s => r2(px(s, 'letterSpacing')));
   const lsShared = lss.every(x => x === lss[0]) && lss[0] !== 0;
   const sug = suggest(fs, lh);
-  const [mfs, mlh] = MOBILE[g] ?? [fs, lh];
+  const [mfs, mlh] = MOBILE[g] ?? [hoje(`type/${g}/font-size`) ?? fs, hoje(`type/${g}/line-height`) ?? lh];
   const props = [['font-size', 'fontSize', 'FONT_SIZE', fs, mfs], ['line-height', 'lineHeight', 'LINE_HEIGHT', lh, mlh]];
-  if (lsShared) props.push(['letter-spacing', 'letterSpacing', 'LETTER_SPACING', px(ss[0], 'letterSpacing'), r2((px(ss[0], 'letterSpacing') * mfs) / fs)]);
+  const lsMob = MOBILE[g] ? undefined : hoje(`type/${g}/letter-spacing`);
+  if (lsShared) props.push(['letter-spacing', 'letterSpacing', 'LETTER_SPACING', px(ss[0], 'letterSpacing'), lsMob ?? r2((px(ss[0], 'letterSpacing') * mfs) / fs)]);
   else if (lss.some(x => x !== 0) && ss.length > 1) avisos.push(`${g}: tracking diferente entre variantes (${lss.join(' / ')}); sem variável de tracking`);
   for (const [suf, field, scope, dv, mv] of props) {
     const sugTxt = !MOBILE[g] && suf !== 'letter-spacing' && (suf === 'font-size' ? sug[0] : sug[1]) !== dv ? ` (sugestão ${suf === 'font-size' ? sug[0] : sug[1]})` : '';
-    plano.push(`type/${g}/${suf}: ${r2(dv)} → ${r2(mv)}${sugTxt} [${ss.length}]`);
+    const atual = !MOBILE[g] && hoje(`type/${g}/${suf}`) !== undefined ? ' (Mobile de hoje)' : '';
+    plano.push(`type/${g}/${suf}: ${r2(dv)} → ${r2(mv)}${atual}${sugTxt} [${ss.length}]`);
     jobs.push({ g, suf, field, scope, dv, mv, ss });
   }
 }
 
 // ── Frames mobile: textos com estilo × sem estilo ──────────────────────────
 const modeNames = Object.fromEntries(cols.flatMap(c => c.modes.map(m => [m.modeId, m.name])));
-async function mobileFrames() {
-  if (FRAMES !== 'auto') return (await Promise.all(FRAMES.map(id => figma.getNodeByIdAsync(id)))).filter(Boolean);
-  const tops = figma.currentPage.children.flatMap(n => (n.type === 'SECTION' ? n.children : [n])).filter(n => n.type === 'FRAME');
-  return tops.filter(f => f.width <= 480 || Object.values(f.explicitVariableModes || {}).some(id => modeNames[id] === MOBILE_MODE));
-}
-const alvos = await mobileFrames();
+const pg = PAGE ? figma.root.children.find(p => p.name === PAGE) : figma.currentPage;
+if (!pg) throw new Error(`Página não encontrada: ${PAGE}`);
+await pg.loadAsync();
+const tops = pg.children.flatMap(n => (n.type === 'SECTION' ? n.children : [n])).filter(n => n.type === 'FRAME');
+const isMobile = f => (f.width >= 320 && f.width <= 480 && f.height >= 1.2 * f.width) || Object.values(f.explicitVariableModes || {}).some(id => modeNames[id] === MOBILE_MODE);
+const alvos = FRAMES === 'auto' ? tops.filter(isMobile) : (await Promise.all(FRAMES.map(id => figma.getNodeByIdAsync(id)))).filter(Boolean);
+const desktops = tops.filter(f => !isMobile(f)).length;
+if (FRAMES === 'auto' && !desktops) avisos.push(`a página "${pg.name}" não tem frame de desktop: se o arquivo é só mobile, o modo responsivo não tem o que equilibrar`);
+if (FRAMES === 'auto' && !alvos.length) avisos.push(`nenhum frame mobile na página "${pg.name}": passe page ou frames`);
 const styleIds = new Set(styles.map(s => s.id));
 const frames = alvos.map(f => {
   const texts = f.findAll(n => n.type === 'TEXT');
@@ -99,7 +121,7 @@ const frames = alvos.map(f => {
 });
 
 if (DRY_RUN) {
-  return { dryRun: true, colecao: col ? col.name : 'Viewport (seria criada)', outras, avisos, bloqueios, frames, plano };
+  return { dryRun: true, pagina: pg.name, colecao: col ? col.name : 'Viewport (seria criada)', outras, avisos, bloqueios, frames, plano };
 }
 if (bloqueios.length) throw new Error('Há bloqueios; resolva antes de aplicar:\n' + bloqueios.join('\n'));
 

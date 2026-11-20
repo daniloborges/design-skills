@@ -25,8 +25,9 @@ const MOBILE = Object.assign(
   { '3xs': 2, '2xs': 4, xs: 8, sm: 12, md: 16, lg: 16, xl: 24, '2xl': 32, 'layout/sm': 48, 'layout/md': 48, 'layout/lg': 64, 'layout/xl': 80 },
   _A.mobile ?? {},
 );
-const FRAMES = _A.frames ?? 'auto'; // ids de frames mobile para contar ligados × soltos; 'auto' = frames da página com até 480 px ou com um modo 'Mobile' explícito
+const FRAMES = _A.frames ?? 'auto'; // ids de frames mobile para contar ligados × soltos; 'auto' = telas em pé de 320 a 480 px de largura, ou com um modo 'Mobile' explícito
 const SET_MODE = _A.setMode ?? {};  // { '<id do frame>': 'Mobile' }
+const PAGE = _A.page ?? null;       // nome da página onde procurar os frames; null = a página aberta
 
 // ── Coleções ────────────────────────────────────────────────────────────────
 const cols = await figma.variables.getLocalVariableCollectionsAsync();
@@ -66,10 +67,14 @@ const PROPS = ['itemSpacing', 'paddingTop', 'paddingRight', 'paddingBottom', 'pa
 const ids = new Set(sp.variableIds);
 const frames = [];
 const modeNames = Object.fromEntries(cols.flatMap(c => c.modes.map(m => [m.modeId, m.name])));
-const alvos = FRAMES === 'auto'
-  ? figma.currentPage.children.flatMap(n => (n.type === 'SECTION' ? n.children : [n])).filter(n => n.type === 'FRAME' &&
-      (n.width <= 480 || Object.values(n.explicitVariableModes || {}).some(id => modeNames[id] === MOBILE_MODE)))
-  : (await Promise.all(FRAMES.map(id => figma.getNodeByIdAsync(id)))).filter(Boolean);
+const pg = PAGE ? figma.root.children.find(p => p.name === PAGE) : figma.currentPage;
+if (!pg) throw new Error(`Página não encontrada: ${PAGE}`);
+await pg.loadAsync();
+const tops = pg.children.flatMap(n => (n.type === 'SECTION' ? n.children : [n])).filter(n => n.type === 'FRAME');
+const isMobile = f => (f.width >= 320 && f.width <= 480 && f.height >= 1.2 * f.width) || Object.values(f.explicitVariableModes || {}).some(id => modeNames[id] === MOBILE_MODE);
+const alvos = FRAMES === 'auto' ? tops.filter(isMobile) : (await Promise.all(FRAMES.map(id => figma.getNodeByIdAsync(id)))).filter(Boolean);
+if (FRAMES === 'auto' && !tops.some(f => !isMobile(f))) bloqueios.push(`a página "${pg.name}" não tem frame de desktop: confira page antes de criar um breakpoint`);
+if (FRAMES === 'auto' && !alvos.length) bloqueios.push(`nenhum frame mobile na página "${pg.name}": passe page ou frames`);
 for (const f of alvos) {
   let ligados = 0, soltos = 0;
   for (const n of [f, ...f.findAll(n => 'layoutMode' in n && n.layoutMode !== 'NONE')]) {
@@ -84,7 +89,7 @@ for (const f of alvos) {
   frames.push(`${f.name} (${f.id}, ${Math.round(f.width)} px): ${ligados} ligados · ${soltos} soltos (só os ligados respondem ao modo)`);
 }
 
-if (DRY_RUN) return { dryRun: true, colecao: SPACING, modo: MOBILE_MODE, outras, bloqueios, frames, plano };
+if (DRY_RUN) return { dryRun: true, pagina: pg.name, colecao: SPACING, modo: MOBILE_MODE, outras, bloqueios, frames, plano };
 if (bloqueios.length) throw new Error('Há bloqueios; resolva antes de aplicar:\n' + bloqueios.join('\n'));
 
 // ── Aplicar ─────────────────────────────────────────────────────────────────

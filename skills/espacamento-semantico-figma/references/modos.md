@@ -6,7 +6,7 @@ Vale para tipografia e espaçamento. As skills `tipografia-semantica-figma` e `e
 
 Um frame mobile troca o modo de cada coleção separadamente. Com a tipografia numa coleção e o espaçamento em outra, cada frame novo precisa do modo certo nas duas, e as duas trocas saem de sincronia.
 
-1. **Procure uma coleção que já tenha os modos de tela** (`Desktop` e `Mobile`, ou `Desktop · Tablet · Mobile`). Se existir, as variáveis novas entram nela.
+1. **Procure uma coleção que já tenha os modos de tela** (`Desktop` e `Mobile`, ou `Desktop · Tablet · Mobile`). Se existir, as variáveis novas entram nela. A exceção é a família diferente: tipografia nunca entra em `Spacing` ou `Primitives`, nem espaço numa coleção de tipografia, porque uma coleção que mistura famílias é ela mesma um achado.
 2. **Se as variáveis já moram em coleções diferentes** (o caso comum do espaçamento, que vive em `Spacing`), mover não é possível sem recriar e religar. Acrescente o modo mesmo assim e **declare as duas chaves** no relatório: quais coleções, e que todo frame mobile precisa das duas em `Mobile`. Configure as duas nos frames mobile que já existem.
 3. **Crie uma coleção nova só quando nenhuma tem os modos**, com o nome `Viewport`.
 

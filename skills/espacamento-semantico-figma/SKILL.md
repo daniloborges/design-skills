@@ -60,8 +60,8 @@ Acrescenta o modo `Mobile` a `Spacing`, com cada semântico apontando para outro
 
 A configuração vai em `ARGS`: no `figma_execute`, ponha `const ARGS = { dryRun: true };` antes do texto do script; no `figma-run`, `--args arquivo.json`. Aqui `collection` é a coleção semântica de espaço (padrão `Spacing`); as outras chaves estão no cabeçalho do script.
 
-1. **Rode `scripts/modo-breakpoint.js` com `{ dryRun: true }`** na página que tem os frames mobile. O script acha sozinho os frames mobile (até 480 px de largura, ou com um modo `Mobile` explícito); passe `frames: [ids]` só quando a detecção errar. Leia a saída nesta ordem:
-   - `bloqueios` não vazio → pare: falta primitivo para algum token, ou o primeiro modo de `Spacing` tem um nome que não é `Desktop`, `Default` nem `Mode 1`. Esses dois últimos o script renomeia para `Desktop`, e o plano mostra a renomeação.
+1. **Rode `scripts/modo-breakpoint.js` com `{ dryRun: true, page: '<página com as telas>' }`**. O script acha sozinho os frames mobile (telas em pé de 320 a 480 px, ou com um modo `Mobile` explícito); passe `frames: [ids]` só quando a detecção errar. Leia a saída nesta ordem:
+   - `bloqueios` não vazio → pare: falta primitivo para algum token; o primeiro modo de `Spacing` tem um nome que não é `Desktop`, `Default` nem `Mode 1` (esses dois o script renomeia para `Desktop`, e o plano mostra a renomeação); ou a página não tem frame de desktop ou de mobile (confira `page`).
    - `outras` não vazio → outra coleção já alterna Desktop/Mobile (a da tipografia, por exemplo). Diga ao usuário que cada frame mobile vai precisar de `Mobile` nas duas.
    - `frames` → quantos gap/padding estão ligados × soltos. Só os ligados respondem; se a maioria está solta, diga isso antes de prometer o resultado e ofereça os passos 3–6 para ligá-los.
    - `plano` → token → primitivo no Mobile. Quando `Spacing` já tem `Mobile`, cada linha mostra também o valor de hoje, se for outro; rodar de novo reaponta para o valor do plano. Ajuste por `mobile` se o arquivo pedir outro valor.
