@@ -6,6 +6,7 @@
 // ── Configuração ────────────────────────────────────────────────────────────
 const _A = (typeof ARGS !== 'undefined' && ARGS) || {};   // figma-run: --set scope=page
 const SCOPE = _A.scope ?? 'auto';            // 'auto' (seleção, senão página) | 'page' | 'all-pages'
+const COMPACT = _A.compact ?? false;         // true = uma linha por item; use quando o JSON completo passar do limite da ferramenta
 const EXCLUDE = /(^|[\s/_-])(doc|docs|spec|specimen|especime|espécime|annotation|anota|legend|legenda)([\s/_-]|$)|^_/i; // frames de documentação
 const EXCLUDE_TEXT = /^(variant|property|state|default|hover|pressed|focus|disabled)\b.*|^(true|false)$/i; // rótulos de variante
 const PREVIEW_PAGE_LIMIT = 400;  // acima disso, sugerir amostra em vez de duplicar a página
@@ -114,7 +115,7 @@ const previewSuggestion = total <= PREVIEW_PAGE_LIMIT
 
 const rows = Object.values(groups).map(g => ({ ...g, styleNames: [...g.styleNames] })).sort((a, b) => b.size - a.size || b.count - a.count);
 
-return {
+const full = {
   scope: SCOPE === 'auto' && figma.currentPage.selection.length ? 'selection' : SCOPE,
   page: figma.currentPage.name,
   totals: { texts: total, ignoredAsDocs: ignored, styled, unstyled: total - styled, mixed: mixed.length, inInstances, localStyles: styles.length, groups: rows.length },
@@ -135,3 +136,19 @@ return {
     lowContrastNote: 'aproximado: fill do texto vs primeiro fill sólido de ancestral; confira sobre imagens e gradientes',
   },
 };
+if (!COMPACT) return full;
+
+// Saída compacta: o mesmo conteúdo em linhas `campo|campo`, sem ids de amostra nem textos de exemplo.
+const t = full.totals, c = full.checks;
+return [
+  `escopo ${full.scope} · página ${full.page} · textos ${t.texts} (com estilo ${t.styled}, sem ${t.unstyled}, mistos ${t.mixed}, em instâncias ${t.inInstances}) · estilos ${t.localStyles} · grupos ${t.groups}`,
+  `preview: ${full.previewSuggestion.mode} — ${full.previewSuggestion.reason}`,
+  ...full.variableFontWarning.map(w => `peso: ${w}`),
+  `checagens: <11px ${c.tooSmall_lt11} · <12px ${c.small_lt12} · fracionados ${c.fractionalSizes.join(',') || '—'} · justificados ${c.justified.length} · altura fixa ${c.fixedHeight} · contraste baixo ${c.lowContrast}`,
+  '# estilos: nome|spec|usos',
+  ...full.styles.map(s => `${s.name}|${s.spec}|${s.uses}`),
+  '# grupos: spec|textos|estilos',
+  ...rows.map(g => `${g.key ?? ''}|${g.count ?? ''}|${(g.styleNames || []).join(', ')}`),
+  `duplicados: ${JSON.stringify(full.duplicateSpecs)}`,
+  `nomes ambíguos: ${JSON.stringify(full.ambiguousNames)} · sem uso: ${JSON.stringify(full.unused)}`,
+].join('\n');

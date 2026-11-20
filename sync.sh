@@ -12,8 +12,10 @@ for skill in skills/*/; do
   case "$skill" in
     *espacamento*)  # só os arquivos de espaçamento, mais a regra comum de modos
       find "${skill}references" -mindepth 1 -maxdepth 1 ! -name 'espacamento*' ! -name 'modos*' -exec rm -rf {} + ;;
-    *)              # tipografia não recebe os arquivos de espaçamento
-      rm -f "${skill}references"/espacamento*.md ;;
+    *dimensao*)     # só os arquivos de dimensão, mais a regra comum de modos
+      find "${skill}references" -mindepth 1 -maxdepth 1 ! -name 'dimensao*' ! -name 'modos*' -exec rm -rf {} + ;;
+    *)              # tipografia não recebe os arquivos de espaçamento nem de dimensão
+      rm -f "${skill}references"/espacamento*.md "${skill}references"/dimensao*.md ;;
   esac
   echo "✓ ${skill}references ← shared/"
 done

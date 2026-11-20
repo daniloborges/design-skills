@@ -29,7 +29,7 @@ Confirme o arquivo e a página ativos. Se houver mais de um arquivo aberto, diga
 - **Tela mobile:** se o arquivo tem frames mobile, ou pedirem para equilibrar desktop e mobile, o passo 8 entra depois dos nomes.
 
 ### 2. Inventário (somente leitura)
-Rode `scripts/inventario.js`. Ele devolve:
+Rode `scripts/inventario.js`. Num arquivo importado (html.to.design) o JSON completo passa de 50 KB e é cortado pela ferramenta; nesse caso rode com `const ARGS = { compact: true };`, que devolve o mesmo conteúdo em uma linha por estilo e por grupo. Ele devolve:
 - **Estilos:** spec e usos, duplicados (`duplicateSpecs`, comparados pelo **peso real**) e nomes ambíguos.
 - **Grupos de spec:** a chave é `família|peso real[i]|tamanho|entrelinha|tracking|caixa`. Cada grupo traz `fontName` completo (com `variationSettings`), amostras e ids.
 - **`variableFontWarning`:** nomes de instância que não batem com o eixo `wght`. Se aparecer, resolva com **uma pergunta global** antes do mapa (ver "Duplicatas suspeitas" na taxonomia).

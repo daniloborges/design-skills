@@ -60,6 +60,7 @@ As faixas sugerem; a função decide. Em site editorial a escala é maior (títu
 - **Mesmo estilo em dois grupos:** grupos que diferem em menos de 100 de peso ou em menos de 0,5 px de tamanho são o mesmo estilo; junte-os num alvo, usando `from`.
 - **Mesma peça em idiomas diferentes** (EN/PT) com tamanhos diferentes: unifique e pergunte.
 - **Chip ou tag é `label/sm`**, não caption. Rótulos de variante e frames de documentação já são ignorados pelo bloco A.
+- **Estilos `<marca>:<componente>-<parte>`** (ex. `da:chat-answer`) são a camada de componente: não renomeie nem funda com a lista fechada. Cada um diz na descrição de que papel deriva.
 
 ---
 

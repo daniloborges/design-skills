@@ -1,6 +1,6 @@
 # design-skills
 
-Plugin `design` do Claude Code: três skills de estilos de texto e variáveis de espaçamento semânticos, no Figma e no código, e uma (`configurar-figma-console`) que liga o Claude Code ao Figma Desktop. Esta última não recebe `references/` do `sync.sh`. Skills, scripts e documentação ficam em português.
+Plugin `design` do Claude Code: skills de estilos de texto, espaçamento e dimensão semânticos no Figma e no código, uma de de-para tipográfico entre arquivos, e uma (`configurar-figma-console`) que liga o Claude Code ao Figma Desktop. Esta última não recebe `references/` do `sync.sh`. Skills, scripts e documentação ficam em português.
 
 ## Estrutura
 
@@ -27,7 +27,9 @@ Plugin `design` do Claude Code: três skills de estilos de texto e variáveis de
 |---|---|
 | Nomes de texto, faixas de tamanho, pisos | `shared/taxonomia.md` |
 | Escala de espaçamento e regras de encaixe | `shared/espacamento.md` |
-| Modos Desktop × Mobile, comuns a texto e espaço (uma chave só, desktop exato, verificação) | `shared/modos.md`; o `sync.sh` o copia também para a skill de espaçamento, que fora dele só recebe `espacamento*` |
+| Tamanhos de mídia e contêiner, harmonia e empilhar no mobile | `shared/dimensao.md` |
+| Modos Desktop × Mobile, comuns a texto, espaço e dimensão (uma chave só, desktop exato, verificação) | `shared/modos.md`; o `sync.sh` o copia também para as skills de espaçamento e de dimensão, que fora dele só recebem `espacamento*` e `dimensao*` |
+| Camada de componente (`<marca>:<componente>-<parte>`) | seção própria em `shared/taxonomia.md` |
 | Auditoria opcional de compliance brasileiro | `shared/legal/` |
 | Checagens do lint e seus IDs | tabela em `skills/tipografia-semantica-codigo/SKILL.md`, implementadas em `scripts/checar-tipografia.mjs` |
 | Fluxo de release | `.github/workflows/release.yml`; passos humanos em `CONTRIBUTING.md` |

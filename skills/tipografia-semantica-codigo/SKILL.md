@@ -20,7 +20,7 @@ Um prefixo de marca no Figma (`acme/heading/xl`) é descartado no código.
 
 | Script | Para quê |
 |---|---|
-| `scripts/gerar-tokens.mjs estilos.json [--out tipografia] [--base 16]` | Gera `tipografia.css` (custom properties + classes, tudo em rem, letter-spacing em em) e `tipografia.tokens.json` (DTCG) a partir dos estilos do Figma. Ignora e lista os estilos fora da taxonomia e os `_deprecated/` |
+| `scripts/gerar-tokens.mjs estilos.json [--out tipografia] [--base 16] [--modos variaveis.json] [--viewport 360,1440]` | Gera `tipografia.css` (custom properties + classes, tudo em rem, letter-spacing em em) e `tipografia.tokens.json` (DTCG) a partir dos estilos do Figma. Com `--modos`, o tamanho de cada papel com valor Desktop e Mobile vira `clamp()` entre as duas larguras de `--viewport`. Os estilos da camada de componente (`da:chat-answer`) saem como `--da-chat-answer-*` e `.da-chat-answer`, e em `component` no DTCG. Ignora e lista os estilos fora da taxonomia e os `_deprecated/` |
 | `scripts/checar-tipografia.mjs <arquivos\|pastas> [--figma estilos.json] [--faixas faixas.json] [--json]` | Guardrail. Sai com código 1 se houver bloqueante, então serve em CI e em pre-commit |
 
 `estilos.json` é a saída de `figma_get_text_styles` (figma-console) ou um array `[{name, fontFamily, fontStyle, fontSize, lineHeight, letterSpacing, textCase}]`.
@@ -55,7 +55,7 @@ Os tamanhos são convertidos com base 16: rem e em × 16, e `clamp()` usa o mín
    - troque o elemento HTML, não o estilo, quando o erro é semântico;
    - suba o tamanho até o piso;
    - para renomear, siga a taxonomia e atualize os usos.
-4. **Migração ou criação de tokens:** gere com `gerar-tokens.mjs` a partir do Figma, em vez de escrever à mão. O Figma é a origem, e o CSS gerado traz o aviso "não edite à mão".
+4. **Migração ou criação de tokens:** gere com `gerar-tokens.mjs` a partir do Figma, em vez de escrever à mão. O Figma é a origem, e o CSS gerado traz o aviso "não edite à mão". Se o arquivo tem modos Desktop × Mobile, exporte também os valores das variáveis `type/*/font-size` no formato `{ "type/heading/xl/font-size": { "Desktop": 84, "Mobile": 44 } }` (um `figma_execute` que lê `valuesByMode` de cada variável) e passe em `--modos`: o tamanho fluido sai pronto, sem media query.
 5. **Checagens que o script não faz** (confira manualmente ou com axe/Lighthouse quando houver página rodando):
    - contraste real (LEI-01);
    - zoom de 200% (LEI-03);
