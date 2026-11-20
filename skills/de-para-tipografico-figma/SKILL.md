@@ -20,12 +20,12 @@ A configuração dos scripts vai em `ARGS`: no `figma_execute`, ponha `const ARG
 ## Fluxo
 
 ### 1. Contexto
-Nomeie os dois arquivos (origem e destino, com `fileKey`), o componente e o prefixo (`<marca>:<componente>`, ex. `da:chat`). Pergunte pelo frame de exploração que vale, quando a origem tiver vários: o que está em teste, não o primeiro.
+Nomeie os dois arquivos (origem e destino, com `fileKey`), o componente e o prefixo (`<marca>:<componente>`, ex. `da:chat`). Pergunte pelo frame de exploração que vale, quando a origem tiver vários: o que está em teste, não o primeiro. Se o destino já tem um conjunto para o mesmo componente (linha "conjuntos de componente" do passo 2), o trabalho é atualizar esse conjunto com o mesmo prefixo, não criar um irmão.
 
 ### 2. Ler os dois lados (somente leitura)
-Rode `scripts/ler-estilos.js` na origem com `{ frame: '<id do frame de exploração>' }` e no destino sem `frame`. Tire um screenshot do frame de origem. Da origem você leva os **papéis** (quem fala, o que é metadado, o que é corpo); do destino, as **fontes**, o **peso real** de cada papel (coluna `peso real`, medida num texto) e as **cores**.
+Rode `scripts/ler-estilos.js` na origem com `{ frame: '<id do frame de exploração>' }` e no destino sem `frame` (num destino grande, com `semEstilosDe: '<prefixo de um conjunto que já existe>'` e `semCores: true` para caber no retorno). Tire um screenshot do frame de origem. Da origem você leva os **papéis** (quem fala, o que é metadado, o que é corpo); do destino, as **fontes**, o **peso real** de cada papel (coluna `peso real`, medida num texto) e as **cores**.
 
-O peso real decide a instância: um estilo do destino chamado "Fraunces Black" com peso real 380 pede `Regular` no conjunto, e um negrito real de 500 pede `SemiBold` quando não há instância 500.
+O peso real decide a instância: um estilo do destino chamado "Fraunces Black" com peso real 380 pede `Regular` no conjunto, e um negrito real de 500 pede `SemiBold` quando não há instância 500. A coluna traz o peso mais frequente e, quando há mais de um, a contagem de cada. Num peso entre duas instâncias (450 entre `Regular` e `Medium`), fique com a mais próxima; no empate, com a que o próprio estilo do destino declara.
 
 ### 3. Mapa (proposta)
 Uma linha por estilo do conjunto:
@@ -34,9 +34,13 @@ Uma linha por estilo do conjunto:
 |---|---|---|---|---|---|
 
 - Agrupe por função, não por tamanho: voz de cada participante, corpo, metadados, controles.
-- Cada parte aponta para um papel da taxonomia (`base`) ou diz "próprio do componente". Tamanho e entrelinha iguais aos do papel fazem o estilo ligar às variáveis `type/*` desse papel.
-- Respeite os pisos: nada abaixo de 11 px; campo de digitação em 16 px ou mais.
-- Duas partes com a mesma spec viram uma só, ou mudam de spec: duplicata não entra.
+- `base` é o papel da taxonomia mais próximo, e é uma referência, não uma promessa de ligação. O estilo liga às variáveis `type/*` do grupo (`label/sm-strong` usa `type/label/sm/*`) só quando tamanho e entrelinha batem com o estilo do papel no destino; senão a descrição diz "próprio do componente (ref. <papel>)". O dry-run mostra qual caso é cada um.
+- Um papel que o destino não tem (a origem usa `body/lg`, o destino não) não se inventa aqui: a parte fica própria, com o papel existente mais próximo como referência, e a criação do papel vai para a skill `tipografia-semantica-figma`.
+- Cada parte tem uma função que a lista de papéis não nomeia (a pergunta de quem usa, o raciocínio do agente), mesmo quando a spec coincide com um papel; é isso que justifica o estilo, e ele então liga às variáveis do papel. Uma parte sem função própria (um link, um parágrafo comum) usa o papel direto, sem estilo de componente.
+- Duas partes com a mesma spec **e** a mesma função viram uma só.
+- Cor: mapeie pela hierarquia, não pelo hex. O texto principal da origem vai para a cor de texto principal do destino (`ink`), o secundário para a secundária (`ink/soft`), o apagado para `ink/mute`, o de destaque para `accent`. Uma origem sem variáveis de cor se lê pela opacidade (60 % é apagado).
+- Respeite os pisos: nada abaixo de 11 px; `label`, `caption`, `code` e `eyebrow` em 12 ou mais; campo de digitação em 16 px ou mais. O dry-run marca os alertas.
+- Num destino com modos Desktop × Mobile, diga quais partes ligam (acompanham o modo) e quais ficam fixas. Um widget de ~400 px tem a mesma largura nos dois, e fixo é o esperado.
 
 Mostre o mapa e espere a aprovação.
 
@@ -63,7 +67,8 @@ Pendências: decisões de design em aberto, glifos trocados
 
 ## Nunca
 - Escolher a instância pelo nome do estilo de onde veio; vale o peso real medido no destino.
-- Criar um estilo de componente para um papel que a taxonomia já cobre sem diferença de spec.
+- Criar um estilo de componente para uma parte sem função própria; ela usa o papel direto.
+- Criar um conjunto irmão quando o destino já tem um para o mesmo componente.
 - Aplicar sem dry-run e sem aprovação, ou mexer em estilos fora do prefixo.
 - Tirar screenshot sem conferir qual arquivo está ativo.
 

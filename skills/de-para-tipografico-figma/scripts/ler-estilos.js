@@ -8,7 +8,10 @@
 //   frame   → com `frame`, cada texto do frame: estilo|cor|amostra, na ordem de leitura
 //   cores   → as variáveis de cor do arquivo (nome e hex), para o de-para de cor
 //
-// ARGS: no figma_execute, ponha `const ARGS = { frame: '4:3' };` antes do script; no figma-run, `--set frame=4:3`.
+// ARGS: no figma_execute, ponha `const ARGS = { frame: '4:3', semEstilosDe: 'da:chat' };` antes do script;
+// no figma-run, `--set frame=4:3` para um valor simples ou `--args arquivo.json` para vários.
+// Num arquivo grande a saída passa do limite da ferramenta: `semEstilosDe` tira da lista os estilos de um prefixo
+// (eles continuam contados em "conjuntos de componente"), e `semCores: true` tira a lista de cores.
 
 // ── Configuração ────────────────────────────────────────────────────────────
 const _A = (typeof ARGS !== 'undefined' && ARGS) || {};
@@ -19,16 +22,25 @@ const SKIP = _A.skip ?? /^(_deprecated\/|novo\/)/; // estilos que não entram
 await figma.loadAllPagesAsync();
 const styles = (await figma.getLocalTextStylesAsync()).filter(s => !SKIP.test(s.name));
 const ids = new Set(styles.map(s => s.id));
-const uso = {}, peso = {};
+// Peso real = o mais frequente entre os textos do estilo (com a contagem), nunca só o primeiro
+const uso = {}, pesos = {};
 for (const t of figma.root.findAll(n => n.type === 'TEXT')) {
   const id = t.textStyleId;
   if (typeof id !== 'string' || !ids.has(id)) continue;
   uso[id] = (uso[id] || 0) + 1;
-  if (peso[id] === undefined && typeof t.fontWeight === 'number') peso[id] = t.fontWeight;
+  if (typeof t.fontWeight === 'number') { pesos[id] ??= {}; pesos[id][t.fontWeight] = (pesos[id][t.fontWeight] || 0) + 1; }
 }
+const peso = Object.fromEntries(Object.entries(pesos).map(([id, m]) => {
+  const ord = Object.entries(m).sort((a, b) => b[1] - a[1]);
+  return [id, ord.length > 1 ? `${ord[0][0]} (de ${ord.map(([w, n]) => `${w}×${n}`).join(' ')})` : ord[0][0]];
+}));
+// Conjuntos de componente que já existem (<marca>:<componente>-<parte>)
+const conjuntos = {};
+for (const s of styles) { const m = /^([a-z0-9-]+:[a-z0-9]+)-/.exec(s.name); if (m) conjuntos[m[1]] = (conjuntos[m[1]] || 0) + 1; }
 const lh = s => (s.lineHeight.unit === 'PIXELS' ? Math.round(s.lineHeight.value * 10) / 10 : s.lineHeight.unit === 'PERCENT' ? `${Math.round(s.lineHeight.value)}%` : 'auto');
 const ls = s => (s.letterSpacing.unit === 'PIXELS' ? `${Math.round(s.letterSpacing.value * 100) / 100}px` : `${Math.round(s.letterSpacing.value * 100) / 100}%`);
-const linhas = styles.map(s => `${s.name}|${s.fontName.family} ${s.fontName.style}|${s.fontSize}/${lh(s)}|${ls(s)}|${s.textCase}|${peso[s.id] ?? '—'}|${uso[s.id] || 0}`);
+const SEM = _A.semEstilosDe ?? null;
+const linhas = styles.filter(s => !SEM || !s.name.startsWith(SEM + '-')).map(s => `${s.name}|${s.fontName.family} ${s.fontName.style}|${s.fontSize}/${lh(s)}|${ls(s)}|${s.textCase}|${peso[s.id] ?? '—'}|${uso[s.id] || 0}`);
 
 // ── Fontes disponíveis por família ─────────────────────────────────────────
 const familias = new Set(styles.map(s => s.fontName.family));
@@ -62,11 +74,11 @@ for (const c of await figma.variables.getLocalVariableCollectionsAsync()) for (c
 
 return [
   `arquivo ${figma.root.name} · estilos ${styles.length} · cores ${cores.length}`,
+  `conjuntos de componente: ${Object.entries(conjuntos).map(([k, n]) => `${k} (${n})`).join(', ') || 'nenhum'}`,
   '# estilos: nome|fonte do estilo|tamanho/entrelinha|tracking|caixa|peso real|usos',
   ...linhas,
   '# fontes disponíveis',
   ...Object.entries(disponiveis).map(([f, st]) => `${f}: ${st.join(', ')}`),
   ...(FRAME ? ['# frame: estilo|cor|amostra', ...frame] : []),
-  '# cores: variável|hex',
-  ...cores,
+  ...(_A.semCores ? [] : ['# cores: variável|hex', ...cores]),
 ].join('\n');

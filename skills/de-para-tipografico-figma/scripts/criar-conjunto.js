@@ -37,18 +37,30 @@ for (const e of ESTILOS) {
   if (e.tamanho < 11) bloqueios.push(`${nome}: ${e.tamanho} px abaixo do piso de 11`);
   if (e.html === 'textarea' || e.html === 'input') { if (e.tamanho < 16) bloqueios.push(`${nome}: campo de digitação com ${e.tamanho} px; o iOS dá zoom abaixo de 16`); }
   if (e.cor && !cores.has(e.cor)) plano.push(`aviso: ${nome} cita a cor "${e.cor}", que não é variável deste arquivo`);
+  // Pisos de alerta da taxonomia (não bloqueiam)
+  if (['label', 'caption', 'code', 'eyebrow'].some(p => (e.base || '').startsWith(p)) && e.tamanho < 12) plano.push(`alerta: ${nome} com ${e.tamanho} px; ${e.base} pede 12 ou mais`);
+  if (/^body\//.test(e.base || '') && e.tamanho < 14) plano.push(`alerta: ${nome} com ${e.tamanho} px; texto corrido pede 14 ou mais`);
+  if (/semi ?bold|bold|black|heavy/i.test(e.estilo) && e.tamanho < 14) plano.push(`boa prática: ${nome} em ${e.estilo} abaixo de 14 px`);
+  // O estilo do papel pode ter modificador (label/sm-strong); as variáveis são do grupo (type/label/sm/*)
+  const grupo = e.base ? e.base.replace(/-(emphasis|strong)$/, '') : null;
   const baseStyle = e.base ? existentes[e.base] : null;
   const liga = !!(baseStyle && baseStyle.fontSize === e.tamanho && baseStyle.lineHeight.unit === 'PIXELS' && Math.abs(baseStyle.lineHeight.value - e.entrelinha) < 0.01
-    && vars[`type/${e.base}/font-size`]);
-  if (e.base && !baseStyle) plano.push(`aviso: ${nome} aponta para o papel ${e.base}, que não existe como estilo neste arquivo`);
+    && vars[`type/${grupo}/font-size`]);
+  if (e.base && !baseStyle) plano.push(`aviso: ${nome} aponta para o papel ${e.base}, que não existe como estilo neste arquivo; fica "próprio do componente"`);
   const antes = existentes[nome];
+  const lhAntes = antes?.lineHeight.unit === 'PIXELS' ? antes.lineHeight.value : null;
   const mudou = antes ? [
     antes.fontName.family !== e.familia || antes.fontName.style !== e.estilo ? `fonte ${antes.fontName.family} ${antes.fontName.style}` : null,
     antes.fontSize !== e.tamanho ? `tamanho ${antes.fontSize}` : null,
+    // O Figma guarda em ponto flutuante (1.1 volta como 1.100000023…): compare com tolerância
+    lhAntes === null || Math.abs(lhAntes - e.entrelinha) > 0.01 ? `entrelinha ${lhAntes ?? antes.lineHeight.unit}` : null,
+    antes.letterSpacing.unit === 'PIXELS' && Math.abs(antes.letterSpacing.value - (e.tracking ?? 0)) > 0.01 ? `tracking ${Math.round(antes.letterSpacing.value * 100) / 100}` : null,
+    antes.textCase !== (e.caixa ?? 'ORIGINAL') ? `caixa ${antes.textCase}` : null,
   ].filter(Boolean) : [];
   plano.push(`${nome}: ${e.familia} ${e.estilo} ${e.tamanho}/${e.entrelinha}${e.tracking ? ` · ${e.tracking}px` : ''}${e.caixa === 'UPPER' ? ' · caixa alta' : ''}`
-    + ` · base ${e.base ?? 'própria'}${liga ? ' ← type/' + e.base : ''} · ${antes ? (mudou.length ? 'atualiza (era ' + mudou.join(', ') + ')' : 'já existe') : 'novo'}`);
+    + ` · base ${e.base ?? 'própria'}${liga ? ' ← type/' + grupo : baseStyle ? ' (spec diferente: fica próprio)' : ''} · ${antes ? (mudou.length ? 'atualiza (era ' + mudou.join(', ') + ')' : 'já existe') : 'novo'}`);
   e._liga = liga;
+  e._grupo = grupo;
 }
 
 if (DRY_RUN) return { dryRun: true, bloqueios, plano };
@@ -66,11 +78,13 @@ for (const e of ESTILOS) {
   s.lineHeight = { unit: 'PIXELS', value: e.entrelinha };
   s.letterSpacing = { unit: 'PIXELS', value: e.tracking ?? 0 };
   s.textCase = e.caixa ?? 'ORIGINAL';
-  s.description = `De-para · ${e.origem ?? '—'} → ${e.base ?? 'próprio do componente'} · HTML ${e.html ?? '—'} · cor ${e.cor ?? '—'}`;
+  // Só um estilo ligado nomeia o papel; os outros dizem "próprio do componente" e citam o papel mais próximo como referência
+  const destino = e._liga ? e.base : `próprio do componente${e.base ? ` (ref. ${e.base})` : ''}`;
+  s.description = `De-para · ${e.origem ?? '—'} → ${destino} · HTML ${e.html ?? '—'} · cor ${e.cor ?? '—'}`;
   if (e._liga) {
-    s.setBoundVariable('fontSize', vars[`type/${e.base}/font-size`]);
-    if (vars[`type/${e.base}/line-height`]) s.setBoundVariable('lineHeight', vars[`type/${e.base}/line-height`]);
+    s.setBoundVariable('fontSize', vars[`type/${e._grupo}/font-size`]);
+    if (vars[`type/${e._grupo}/line-height`]) s.setBoundVariable('lineHeight', vars[`type/${e._grupo}/line-height`]);
   }
-  feitos.push(`${nome}${e._liga ? ' ← type/' + e.base : ''}`);
+  feitos.push(`${nome}${e._liga ? ' ← type/' + e._grupo : ''}`);
 }
 return { dryRun: false, estilos: feitos.length, feitos };

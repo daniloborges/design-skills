@@ -104,8 +104,8 @@ Link não é estilo. É o estilo do papel (`body/md`) mais decoração e cor, po
 Um componente com tipografia própria (um widget de chat, um player, um editor) pode ter um conjunto de estilos seu, como `da:chat-answer` ou `da:chat-question`. É uma terceira camada, como `card/padding` no espaçamento, e ela só existe apontando para a camada de papéis:
 
 - **Nome:** `<prefixo>:<componente>-<parte>`, em kebab-case. O `:` separa o conjunto da lista fechada, e o Figma não o trata como pasta. Partes com modificador seguem a mesma regra: `-emphasis` e `-strong`, no máximo um.
-- **Descrição em formato fixo:** `De-para · <origem> → <papel base ou "próprio do componente"> · HTML <elemento> · cor <variável>`. A descrição é o de-para; o código e o frame de documentação a leem.
-- **Ligação:** quando tamanho e entrelinha batem exatamente com um papel da lista, o estilo liga às variáveis `type/<papel>/*` desse papel e acompanha a escala do arquivo. Quando não batem, ele fica com valores próprios e a descrição diz "próprio do componente".
+- **Descrição em formato fixo:** `De-para · <origem> → <papel> · HTML <elemento> · cor <variável>` para um estilo ligado, e `→ próprio do componente (ref. <papel mais próximo>)` para um estilo com valores próprios. A descrição é o de-para; o código e o frame de documentação a leem.
+- **Ligação:** quando tamanho e entrelinha batem exatamente com o estilo de um papel, o estilo liga às variáveis do grupo desse papel (`label/sm-strong` → `type/label/sm/*`) e acompanha a escala do arquivo. Quando não batem, ele fica com valores próprios.
 - **Peso real:** escolha a instância da fonte pelo peso medido nos textos do arquivo de destino (`fontWeight` de um nó que usa o papel), nunca pelo nome do estilo de onde veio.
 - **Pisos:** os mesmos da lista. Um campo de texto em que se digita fica em 16 px ou mais, porque o iOS dá zoom em campo menor.
 

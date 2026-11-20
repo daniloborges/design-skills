@@ -7,8 +7,12 @@
 //   tokens   → degraus a criar: ['thumb/lg', 'avatar/md']. Valores da tabela de dimensao.md; `valores` sobrepõe:
 //              { 'thumb/lg': { width: [192, 128], height: [144, 96], 'max-width': [192, 1200] } } → [Desktop, Mobile]
 //   ligar    → [{ node: '<id>', token: 'thumb/lg' }]: liga largura e altura (desfaz a ligação de outra família)
-//   empilhar → [{ row: '<id da linha>', media: '<id da mídia>', token: 'thumb/lg', gap: 'gap/lg', textMin: 280 }]
-//              a linha quebra, a mídia preenche com proporção travada, min/max ligados ao token, o texto ganha largura mínima
+//   empilhar → [{ row: '<id da linha>', media: '<id da mídia>', token: 'thumb/lg', gap: 'gap/lg', textMin: 280,
+//                larguraMobile: 334, maxWidth: 'size/thumb/lg/max-width' }]
+//              a linha quebra, a mídia preenche com proporção travada, min/max ligados ao token, o texto ganha largura mínima.
+//              `larguraMobile` é a largura útil da linha na tela mobile: o dry-run confere se a quebra acontece.
+//              `maxWidth` é a variável de largura máxima; sem ela, usa a única `size/<token>/*max-width` que já existir.
+// Um token que já existe mantém os valores atuais; só `valores` os muda.
 
 // ── Configuração ────────────────────────────────────────────────────────────
 const _A = (typeof ARGS !== 'undefined' && ARGS) || {};
@@ -56,16 +60,28 @@ plano.push(`coleção: ${col ? col.name : 'Viewport (seria criada)'}`);
 
 // ── Tokens ──────────────────────────────────────────────────────────────────
 const tokensNec = new Set([...TOKENS, ...LIGAR.map(l => l.token), ...EMPILHAR.map(e => e.token)]);
-const defs = [];
+const defs = [], maxVarDe = {};
+const modoVal = (v, nome) => { const m = col?.modes.find(x => x.name === nome); return m ? v.valuesByMode[m.modeId] : undefined; };
 for (const t of tokensNec) {
   const base = padrao(t);
   if (!base && !VALORES[t]) { bloqueios.push(`${t}: fora da lista fechada de dimensao.md; pergunte antes de criar`); continue; }
   const vals = { ...(base || {}), ...(VALORES[t] || {}) };
-  if (EMPILHAR.some(e => e.token === t) && !vals['max-width']) vals['max-width'] = [vals.width[0], 1200];
+  const emp = EMPILHAR.find(e => e.token === t);
+  if (emp) {
+    // A largura máxima pode já existir com outro nome (`mobile-max-width`); só uma candidata é aceita sem `maxWidth`
+    const cand = emp.maxWidth ? [emp.maxWidth] : Object.keys(existing).filter(n => n.startsWith(`size/${t}/`) && n.endsWith('max-width'));
+    if (cand.length > 1) bloqueios.push(`${t}: várias larguras máximas (${cand.join(', ')}); passe maxWidth`);
+    else if (cand.length === 1) { maxVarDe[t] = cand[0]; if (!existing[cand[0]]) vals[cand[0].split('/').pop()] = [vals.width[0], 1200]; }
+    else { vals['max-width'] = [vals.width[0], 1200]; maxVarDe[t] = `size/${t}/max-width`; }
+  }
   for (const [prop, [d, m]] of Object.entries(vals)) {
     const name = `size/${t}/${prop}`;
     const now = existing[name];
-    plano.push(`${name}: Desktop ${d} · Mobile ${m}${now ? ' (já existe: atualiza)' : ''}`);
+    if (now && !VALORES[t]?.[prop]) {
+      plano.push(`${name}: já existe, mantém Desktop ${modoVal(now, DESKTOP)} · Mobile ${modoVal(now, MOBILE_MODE)}`);
+      continue;
+    }
+    plano.push(`${name}: Desktop ${d} · Mobile ${m}${now ? ` (era Desktop ${modoVal(now, DESKTOP)} · Mobile ${modoVal(now, MOBILE_MODE)})` : ''}`);
     defs.push({ name, d, m });
   }
 }
@@ -74,14 +90,41 @@ for (const t of tokensNec) {
 for (const l of LIGAR) {
   const n = await figma.getNodeByIdAsync(l.node);
   if (!n) { bloqueios.push(`ligar: nó ${l.node} não encontrado`); continue; }
-  const antes = ['width', 'height'].map(k => n.boundVariables?.[k] ? `${k} ligado a outra variável` : null).filter(Boolean);
-  plano.push(`ligar ${n.name} (${n.id}) ${Math.round(n.width)}×${Math.round(n.height)} → size/${l.token}${antes.length ? ' · desfaz: ' + antes.join(', ') : ''}`);
+  const antes = ['width', 'height'].map(k => {
+    const id = n.boundVariables?.[k]?.id;
+    return id && id !== existing[`size/${l.token}/${k}`]?.id ? `${k} ligado a outra variável` : null;
+  }).filter(Boolean);
+  const ja = ['width', 'height'].every(k => n.boundVariables?.[k]?.id && n.boundVariables[k].id === existing[`size/${l.token}/${k}`]?.id);
+  plano.push(`ligar ${n.name} (${n.id}) ${Math.round(n.width)}×${Math.round(n.height)} → size/${l.token}${ja ? ' (já ligado)' : ''}${antes.length ? ' · desfaz: ' + antes.join(', ') : ''}`);
 }
+const valorDe = async (name, modo) => {
+  if (existing[name]) return modoVal(existing[name], modo);
+  const def = defs.find(d => d.name === name);
+  return def ? (modo === DESKTOP ? def.d : def.m) : undefined;
+};
+const acharVar = async name => { for (const c of cols) for (const id of c.variableIds) { const v = await figma.variables.getVariableByIdAsync(id); if (v.name === name) return v; } };
 for (const e of EMPILHAR) {
   const row = await figma.getNodeByIdAsync(e.row), media = await figma.getNodeByIdAsync(e.media);
   if (!row || !media) { bloqueios.push(`empilhar: linha ou mídia não encontrada (${e.row}, ${e.media})`); continue; }
-  if (row.layoutMode !== 'HORIZONTAL') { bloqueios.push(`empilhar: ${row.name} não é auto layout horizontal`); continue; }
-  plano.push(`empilhar ${row.name} (${row.id}): wrap, ${e.gap ?? 'gap/lg'} entre linhas, ${media.name} preenche 4:3 travado, min/max ← size/${e.token}, texto ≥ ${e.textMin ?? 280} px`);
+  if (row.layoutMode !== 'HORIZONTAL') {
+    bloqueios.push(`empilhar: ${row.name} é ${row.layoutMode === 'GRID' ? 'GRID' : row.layoutMode}; a receita precisa de auto layout horizontal. Reorganize a linha, ou mantenha variantes por tela e ligue só o tamanho`);
+    continue;
+  }
+  const gapNome = e.gap ?? 'gap/lg';
+  const gapVar = await acharVar(gapNome);
+  if (!gapVar) bloqueios.push(`empilhar: variável de espaço ${gapNome} não existe`);
+  const textMin = e.textMin ?? 280;
+  const irmaos = row.children.filter(k => k !== media && k.layoutSizingHorizontal === 'FILL').map(k => k.name);
+  const w = await valorDe(`size/${e.token}/width`, DESKTOP), h = await valorDe(`size/${e.token}/height`, DESKTOP);
+  const prop = w && h ? `${w}:${h}`.replace(/^(\d+):(\d+)$/, (_, a, b) => { const g = (x, y) => (y ? g(y, x % y) : x); const d = g(+a, +b); return `${a / d}:${b / d}`; }) : '?';
+  plano.push(`empilhar ${row.name} (${row.id}): wrap, ${gapNome} entre linhas, ${media.name} preenche ${prop} travado, min ← size/${e.token}/width, max ← ${maxVarDe[e.token] ?? '? (ver bloqueios)'}, largura mínima ${textMin} px em: ${irmaos.join(', ') || 'nenhum irmão em fill (o texto não vai quebrar)'}`);
+  // A quebra só acontece se mínima da mídia + espaço entre itens + mínima do texto passar da largura da linha no mobile
+  if (e.larguraMobile) {
+    const minMob = await valorDe(`size/${e.token}/width`, MOBILE_MODE);
+    const soma = (minMob ?? 0) + (row.itemSpacing ?? 0) + textMin;
+    if (soma <= e.larguraMobile) bloqueios.push(`empilhar ${row.name}: ${minMob} + ${row.itemSpacing} + ${textMin} = ${soma} ≤ ${e.larguraMobile}; no mobile a linha não quebra. Suba textMin para mais de ${e.larguraMobile - (minMob ?? 0) - (row.itemSpacing ?? 0)}`);
+    else plano.push(`quebra no mobile: ${minMob} + ${row.itemSpacing} + ${textMin} = ${soma} > ${e.larguraMobile} ✓`);
+  } else plano.push(`aviso: sem larguraMobile, o dry-run não confere se a linha quebra no mobile`);
 }
 
 if (DRY_RUN) return { dryRun: true, bloqueios, plano };
@@ -92,7 +135,7 @@ if (!col) { col = figma.variables.createVariableCollection('Viewport'); col.rena
 if (!col.modes.some(m => m.name === MOBILE_MODE)) col.addMode(MOBILE_MODE);
 const D = col.modes.find(m => m.name === DESKTOP)?.modeId ?? col.modes[0].modeId;
 const M = col.modes.find(m => m.name === MOBILE_MODE).modeId;
-const V = {};
+const V = { ...existing };
 for (const { name, d, m } of defs) {
   const v = existing[name] ?? figma.variables.createVariable(name, col, 'FLOAT');
   v.scopes = ['WIDTH_HEIGHT'];
@@ -107,17 +150,15 @@ for (const l of LIGAR) {
   n.setBoundVariable('height', V[`size/${l.token}/height`]);
 }
 const spacing = cols.find(c => spaceCols.has(c.id) && c.variableIds.length);
-const spaceVar = async name => { for (const c of cols) for (const id of c.variableIds) { const v = await figma.variables.getVariableByIdAsync(id); if (v.name === name) return v; } };
 for (const e of EMPILHAR) {
   const row = await figma.getNodeByIdAsync(e.row), media = await figma.getNodeByIdAsync(e.media);
   row.layoutWrap = 'WRAP';
-  const g = await spaceVar(e.gap ?? 'gap/lg');
-  if (g) row.setBoundVariable('counterAxisSpacing', g); else row.counterAxisSpacing = 24;
+  row.setBoundVariable('counterAxisSpacing', await acharVar(e.gap ?? 'gap/lg'));
   media.setBoundVariable('width', null);
   media.setBoundVariable('height', null);
   media.layoutSizingHorizontal = 'FILL';
   media.setBoundVariable('minWidth', V[`size/${e.token}/width`]);
-  media.setBoundVariable('maxWidth', V[`size/${e.token}/max-width`]);
+  media.setBoundVariable('maxWidth', V[maxVarDe[e.token]]);
   media.lockAspectRatio();
   for (const k of row.children) if (k !== media && k.layoutSizingHorizontal === 'FILL') k.minWidth = e.textMin ?? 280;
 }
