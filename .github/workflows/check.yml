@@ -29,9 +29,10 @@ jobs:
           git diff --exit-code -- skills || { echo "::error::skills/*/references diverge de shared/ — rode ./sync.sh e commite"; exit 1; }
       - name: Manifestos e catálogos em dia com package.json
         run: node scripts/sync-versions.mjs --check
-      - name: Checagem de tipografia (fixtures)
+      - name: Testes (node --test)
+        # Os arquivos, não a pasta: o Node 24 trata `test/` como módulo e falha com MODULE_NOT_FOUND.
         run: |
-          if ls test/*.test.mjs >/dev/null 2>&1; then node --test test/; else echo "sem testes ainda"; fi
+          if ls test/*.test.mjs >/dev/null 2>&1; then node --test test/*.test.mjs; else echo "sem testes ainda"; fi
       - name: Todo pull request carrega um changeset
         if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'changeset-release/')
         run: pnpm exec changeset status --since origin/${{ github.base_ref }}

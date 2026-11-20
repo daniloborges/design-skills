@@ -9,6 +9,8 @@ Plugin `design` do Claude Code: três skills de estilos de texto e variáveis de
 | `shared/` | Único lugar onde se editam regras e taxonomia. Tudo em `skills/*/references/` é cópia gerada. |
 | `figma/*.md` | Versões condensadas para o agente do Figma. Mantidas à mão, então ficam velhas quando `shared/` muda. |
 | `tools/figma-run/` | Executor opcional, com `package.json` próprio. Fora do plugin. |
+| `hooks/` | Guardas das chamadas ao figma-console. `api-assincrona.mjs` é um hook clássico (`PreToolUse`) e carrega a barreira de correção, porque roda em qualquer versão do Claude Code. `figma-details.ts` é um mod e só carrega experiência (pedir `fileKey`, linha de status); uma regra que precisa valer para todos nunca vai para ele. |
+| `test/` | Testes `node --test` que o CI roda. Os do mod (`hooks/*.test.ts`) rodam com `claude plugin test .`, fora do CI. |
 
 ## Como este repositório funciona
 

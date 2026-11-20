@@ -1,0 +1,13 @@
+{
+  "modules": ["./figma-details.ts"],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__figma-console__figma_execute",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/api-assincrona.mjs"] }
+        ]
+      }
+    ]
+  }
+}
