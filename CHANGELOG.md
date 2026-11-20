@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- 472300d: Duas skills novas e dois complementos.
+
+  - **`dimensao-semantica-figma`**: tokens `size/<papel>/<degrau>` para thumbs, avatares, ícones e contêineres, com a regra de harmonia (a mídia acompanha N linhas do título ao lado), a receita de empilhar mídia + texto no mobile só com variáveis, e a detecção de largura ou altura ligada a variável de outra família. Fonte de verdade em `shared/dimensao.md`.
+  - **`de-para-tipografico-figma`**: leva a tipografia de uma exploração para outro arquivo como um conjunto `<marca>:<componente>-<parte>`, escolhendo a instância pelo peso real medido no destino, com o de-para na descrição de cada estilo e um frame de documentação. A taxonomia ganha a seção "Camada de componente".
+  - **`tipografia-semantica-codigo`**: `gerar-tokens.mjs --modos` gera `font-size` em `clamp()` a partir dos valores Desktop e Mobile, e os estilos da camada de componente saem como `--<marca>-<componente>-<parte>-*`.
+  - **`tipografia-semantica-figma`**: o inventário aceita `compact: true`, uma linha por estilo e por grupo, para arquivos cujo JSON completo passa do limite da ferramenta.
+
+- 7a5a678: Guardas das chamadas ao figma-console. Um hook `PreToolUse` barra o `figma_execute` que usa a API síncrona da Plugin API, recusada pelo Figma com `documentAccess: dynamic-page`, e devolve a troca pela versão `Async`. O mod `figma-details` pede `fileKey` quando há mais de um arquivo conectado e mostra o arquivo alvo na linha de status.
+- 6f3072b: Modo responsivo (Desktop × Mobile). A tipografia ganha o passo 8 e o script `responsivo.js`: liga tamanho, entrelinha e tracking dos estilos a variáveis com um valor por modo, com dry-run, bloqueio de variantes divergentes e verificação pelo valor resolvido dentro dos frames. O espaçamento ganha o passo 8 e o script `modo-breakpoint.js`: o modo `Mobile` em `Spacing` reaponta cada semântico para outro primitivo e conta os nós ligados × soltos. A regra comum (uma chave de modo só, valor de desktop exato, o pequeno fica e o grande encolhe mais) mora em `shared/modos.md`. As duas skills passam a declarar o tipo (target-state).
+
+  O `figma-run` sai com o código 3 e uma mensagem clara quando as 10 portas 9223–9232 estão ocupadas por sessões com o figma-console MCP; antes, o erro de porta ocupada derrubava o processo com o código 1.
+
 ## 0.3.0
 
 ### Minor Changes
