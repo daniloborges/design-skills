@@ -11,7 +11,7 @@ Fonte única de verdade. As skills de Figma e de código leem este arquivo, e a 
 5. **Ênfase é modificador, não papel.** Existem dois sufixos, `-emphasis` e `-strong`. Um estilo novo só se justifica quando também mudam o tamanho ou a entrelinha.
 6. **Responsivo não entra no nome.** Mobile e desktop usam o mesmo nome; a diferença vai para variáveis com modos `Desktop` e `Mobile`, ligadas ao estilo (seção "Escala responsiva").
 7. **Tamanho e entrelinha andam juntos**, em valores inteiros e numa grade de 2 ou 4 px.
-8. **A lista é fechada.** Só existem os nomes das tabelas abaixo, com **no máximo um** modificador. `label/lg`, `-emphasis-strong` e `display/xl-strong` sem variação real de peso não existem. Se algo não couber, pergunte, não invente.
+8. **A lista é fechada.** Só existem os nomes das tabelas abaixo, com **no máximo um** modificador. `label/lg`, `-emphasis-strong` e `display/xl-strong` sem variação real de peso não existem. Se algo não couber, pergunte, não invente. A única extensão é a camada de componente (`<prefixo>:<componente>-<parte>`, seção própria abaixo), e cada estilo dela aponta para um papel desta lista.
 9. **Vale o peso real, não o nome da instância.** Em fonte variável, o peso é o eixo `wght` (`fontName.variationSettings.wght` / `fontWeight`). Um "Fraunces Black" com `wght 360` é Light. Importações de site (html.to.design e parecidos) costumam deixar o nome errado.
 10. **Um único estilo tem `h1` como padrão** no arquivo: em geral `display/xl`, ou `heading/xl` se não houver display.
 
@@ -98,6 +98,18 @@ Ordenar faz parte de toda aplicação e também pode ser pedido isoladamente.
 Um trecho com ênfase dentro de um texto **não** justifica um estilo de texto misto. O texto base recebe o estilo do papel e o trecho recebe o estilo com modificador. No HTML, `-emphasis` vira `em` e `-strong` vira `strong`, só quando a ênfase tem sentido; se for puramente visual, vira `span`.
 
 Link não é estilo. É o estilo do papel (`body/md`) mais decoração e cor, porque nenhum dos design systems de referência trata link como estilo de texto.
+
+## Camada de componente (`<prefixo>:<componente>-<parte>`)
+
+Um componente com tipografia própria (um widget de chat, um player, um editor) pode ter um conjunto de estilos seu, como `da:chat-answer` ou `da:chat-question`. É uma terceira camada, como `card/padding` no espaçamento, e ela só existe apontando para a camada de papéis:
+
+- **Nome:** `<prefixo>:<componente>-<parte>`, em kebab-case. O `:` separa o conjunto da lista fechada, e o Figma não o trata como pasta. Partes com modificador seguem a mesma regra: `-emphasis` e `-strong`, no máximo um.
+- **Descrição em formato fixo:** `De-para · <origem> → <papel base ou "próprio do componente"> · HTML <elemento> · cor <variável>`. A descrição é o de-para; o código e o frame de documentação a leem.
+- **Ligação:** quando tamanho e entrelinha batem exatamente com um papel da lista, o estilo liga às variáveis `type/<papel>/*` desse papel e acompanha a escala do arquivo. Quando não batem, ele fica com valores próprios e a descrição diz "próprio do componente".
+- **Peso real:** escolha a instância da fonte pelo peso medido nos textos do arquivo de destino (`fontWeight` de um nó que usa o papel), nunca pelo nome do estilo de onde veio.
+- **Pisos:** os mesmos da lista. Um campo de texto em que se digita fica em 16 px ou mais, porque o iOS dá zoom em campo menor.
+
+Crie a camada só quando o componente tem papéis que a lista não cobre (a pergunta de um usuário, o raciocínio de um agente, uma chamada de ferramenta). Um componente que só usa `body/md` e `label/sm` usa os papéis direto.
 
 ## Pisos e limites
 
