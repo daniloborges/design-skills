@@ -65,10 +65,25 @@ wss.on('connection', (ws) => {
   ws.on('close', () => clients.delete(ws));
 });
 
-function listen(p) { return new Promise((ok, fail) => { server.once('error', fail); server.listen(p, 'localhost', () => { server.off('error', fail); ok(p); }); }); }
+// O WebSocketServer repassa o erro do servidor HTTP; sem este ouvinte, a porta ocupada derruba o processo
+// antes de a próxima ser tentada. O erro já é tratado pela promessa de `listen`.
+wss.on('error', () => {});
+function listen(p) {
+  return new Promise((ok, fail) => {
+    const onErr = (e) => { server.off('listening', onOk); fail(e); };
+    const onOk = () => { server.off('error', onErr); ok(p); };
+    server.once('error', onErr);
+    server.once('listening', onOk);
+    server.listen(p, 'localhost');
+  });
+}
 // de cima para baixo: deixa 9223 (porta preferida do MCP) livre
 for (let p = 9232; p >= 9223; p--) { try { port = await listen(p); break; } catch { /* ocupada */ } }
-if (!port) { log('nenhuma porta livre entre 9223 e 9232'); process.exit(3); }
+if (!port) {
+  log('nenhuma porta livre entre 9223 e 9232: cada sessão com o figma-console MCP aberto ocupa uma.');
+  log('Feche sessões antigas do Claude, ou rode o script pelo figma_execute do MCP.');
+  process.exit(3);
+}
 log(`aguardando o plugin na porta ${port} (até ${opt.wait / 1000}s)…`);
 
 const match = (fi) => !opt.file || fi.fileKey === opt.file || (fi.fileName || '').toLowerCase().includes(opt.file.toLowerCase());

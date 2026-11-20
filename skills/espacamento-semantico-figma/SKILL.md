@@ -1,11 +1,13 @@
 ---
 name: espacamento-semantico-figma
-description: Audita as variáveis de espaçamento de um arquivo Figma (gap e padding do auto layout), organiza em duas camadas (Primitives → Spacing com gap/md, padding/lg, layout/xl), mostra o impacto num preview ANTES × DEPOIS e liga os nós às variáveis só depois de aprovado. Use para organizar, renomear, consolidar ou criar variáveis de espaçamento, achar auto layouts com valor solto ou ligado à variável errada, ou montar a escala de espaço do projeto. Não use para cor, raio, tipografia (existe tipografia-semantica-figma) nem para código.
+description: Audita as variáveis de espaçamento de um arquivo Figma (gap e padding do auto layout), organiza em duas camadas (Primitives → Spacing com gap/md, padding/lg, layout/xl) e liga os nós às variáveis depois de aprovado. Use para organizar, renomear, consolidar ou criar variáveis de espaçamento, achar auto layouts com valor solto ou ligado à variável errada, montar a escala de espaço do projeto, ou equilibrar o espaçamento entre desktop e mobile com um modo de breakpoint. Não use para cor, raio, tipografia (existe tipografia-semantica-figma) nem para código.
 ---
 
 # Espaçamento semântico — frente Figma
 
 Transforma `item spacing/14_01`, `r/md` usado como gap e paddings soltos em variáveis com papel (`gap/md`, `padding/sm`, `layout/lg`) ligadas ao auto layout.
+
+**This is a target-state skill.** Existe uma forma correta para as variáveis de espaço e suas ligações, e o trabalho é fazer o arquivo chegar nela. Rodar de novo repara o que saiu da forma; o inventário, o plano e os dry-runs leem sem escrever.
 
 **Fonte de verdade:** [references/espacamento.md](references/espacamento.md). Leia antes de propor qualquer nome ou valor: escala, lista fechada, regras de encaixe, armadilhas. Pesquisa e fontes em [espacamento-plataformas.md](references/espacamento-plataformas.md).
 
@@ -20,7 +22,7 @@ Transforma `item spacing/14_01`, `r/md` usado como gap e paddings soltos em vari
 ### 1. Contexto
 Confirme o arquivo e a página ativos. Se houver mais de um arquivo aberto, diga qual vai usar. Pergunte só o que não se infere (no máximo 3, todas globais):
 - **Camadas:** duas (`Primitives` + `Spacing`, padrão) ou uma só `Spacing`.
-- **Modos:** só `Default` (padrão) ou densidade / breakpoint.
+- **Modos:** só `Default` (padrão) ou densidade / breakpoint. Com frames mobile no arquivo, ou pedido de equilibrar desktop e mobile, o breakpoint é o passo 8.
 - **Biblioteca publicada?** Se outros arquivos consomem as variáveis, não renomeie as antigas, só reaponte e arquive.
 
 ### 2. Inventário (somente leitura)
@@ -53,6 +55,20 @@ Com `MODE = 'preview'` o script cria as coleções se faltarem (isso é a única
 ### 7. Verificação
 Rode o inventário de novo e compare: nós soltos, variáveis fora de escopo (deve ser 0), variáveis sem uso, tokens por papel. Confira um frame com screenshot.
 
+### 8. Modo de breakpoint (Desktop × Mobile)
+Acrescenta o modo `Mobile` a `Spacing`, com cada semântico apontando para outro primitivo. Pré-requisito: `Primitives` e `Spacing` existem (passos 2–6). Leia antes [references/modos.md](references/modos.md) (uma chave de modo só, desktop exato, verificação) e "Modo de breakpoint" em [references/espacamento.md](references/espacamento.md) (a tabela mobile).
+
+A configuração vai em `ARGS`: no `figma_execute`, ponha `const ARGS = { dryRun: true };` antes do texto do script; no `figma-run`, `--args arquivo.json`. Aqui `collection` é a coleção semântica de espaço (padrão `Spacing`); as outras chaves estão no cabeçalho do script.
+
+1. **Rode `scripts/modo-breakpoint.js` com `{ dryRun: true, page: '<página com as telas>' }`**. O script acha sozinho os frames mobile (telas em pé de 320 a 480 px, ou com um modo `Mobile` explícito); passe `frames: [ids]` só quando a detecção errar. Leia a saída nesta ordem:
+   - `bloqueios` não vazio → pare: falta primitivo para algum token; o primeiro modo de `Spacing` tem um nome que não é `Desktop`, `Default` nem `Mode 1` (esses dois o script renomeia para `Desktop`, e o plano mostra a renomeação); ou a página não tem frame de desktop ou de mobile (confira `page`).
+   - `outras` não vazio → outra coleção já alterna Desktop/Mobile (a da tipografia, por exemplo). Diga ao usuário que cada frame mobile vai precisar de `Mobile` nas duas.
+   - `frames` → quantos gap/padding estão ligados × soltos. Só os ligados respondem; se a maioria está solta, diga isso antes de prometer o resultado e ofereça os passos 3–6 para ligá-los.
+   - `plano` → token → primitivo no Mobile. Quando `Spacing` já tem `Mobile`, cada linha mostra também o valor de hoje, se for outro; rodar de novo reaponta para o valor do plano. Ajuste por `mobile` se o arquivo pedir outro valor.
+2. **Mostre o plano** e espere a aprovação. É uma mudança visual no mobile.
+3. **Rode com `dryRun: false`** e `setMode` nos frames mobile que ainda não têm modo explícito em `Spacing`.
+4. **Confira:** leia `paddingTop`/`itemSpacing` de um nó ligado dentro do frame mobile e do desktop (valores diferentes, desktop igual ao de antes) e tire um screenshot do frame mobile.
+
 ## Relatório final
 ```
 ## Espaçamento — <arquivo> / <escopo>
@@ -75,4 +91,5 @@ Pendências: Bloqueante / Alerta / Boa prática
 
 ## References
 - [espacamento.md](references/espacamento.md): escala, lista fechada, regras de encaixe, variáveis existentes, modos, frame de legenda, acessibilidade, armadilhas. **Obrigatório.**
+- [modos.md](references/modos.md): modos Desktop × Mobile, comuns a espaçamento e tipografia. Leia no passo 8.
 - [espacamento-plataformas.md](references/espacamento-plataformas.md): Atlassian, Polaris, Primer, Dialtone, como Cloudscape, Carbon, Red Hat e Spectrum documentam espaçamento, escopos do Figma, DTCG, fontes e o que não foi verificado.

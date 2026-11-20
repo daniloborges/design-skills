@@ -9,7 +9,7 @@ Fonte única de verdade. As skills de Figma e de código leem este arquivo, e a 
 3. **O tamanho define só o visual.** O nível do heading vem da estrutura do documento. Um `heading/xl` pode estar num `h2`.
 4. **Escala t-shirt:** `2xs` · `xs` · `sm` · `md` · `lg` · `xl`. `md` é o padrão de cada papel.
 5. **Ênfase é modificador, não papel.** Existem dois sufixos, `-emphasis` e `-strong`. Um estilo novo só se justifica quando também mudam o tamanho ou a entrelinha.
-6. **Responsivo não entra no nome.** Mobile e desktop usam o mesmo nome; a diferença vai para modos de variável.
+6. **Responsivo não entra no nome.** Mobile e desktop usam o mesmo nome; a diferença vai para variáveis com modos `Desktop` e `Mobile`, ligadas ao estilo (seção "Escala responsiva").
 7. **Tamanho e entrelinha andam juntos**, em valores inteiros e numa grade de 2 ou 4 px.
 8. **A lista é fechada.** Só existem os nomes das tabelas abaixo, com **no máximo um** modificador. `label/lg`, `-emphasis-strong` e `display/xl-strong` sem variação real de peso não existem. Se algo não couber, pergunte, não invente.
 9. **Vale o peso real, não o nome da instância.** Em fonte variável, o peso é o eixo `wght` (`fontName.variationSettings.wght` / `fontWeight`). Um "Fraunces Black" com `wght 360` é Light. Importações de site (html.to.design e parecidos) costumam deixar o nome errado.
@@ -123,6 +123,33 @@ As faixas acima valem para produto e UI. Sites editoriais e portfólios costumam
 - As faixas do projeto ficam em `tipografia.faixas.json`, na raiz do repositório ou junto do arquivo Figma documentado. Só as diferenças: `{"heading": {"xl": [72, 96], "lg": [44, 71]}}`.
 - As duas skills leem esse arquivo. No código, passe `--faixas tipografia.faixas.json`.
 - **Os pisos mínimos não mudam com as faixas.** Faixa é convenção de escala; piso é acessibilidade.
+
+## Escala responsiva (modos Desktop × Mobile)
+
+O estilo continua um só. Tamanho, entrelinha e tracking passam a vir de variáveis `FLOAT` com um valor por modo, e o frame mobile escolhe o modo. Onde as variáveis moram e como verificar está em `modos.md`.
+
+**Variáveis**, uma por grupo de estilo (o estilo base e suas variantes `-emphasis`/`-strong` dividem as mesmas):
+
+| Variável | Escopo | `codeSyntax.WEB` |
+|---|---|---|
+| `type/<papel>/<tamanho>/font-size` | `FONT_SIZE` | `var(--type-<papel>-<tamanho>-font-size)` |
+| `type/<papel>/<tamanho>/line-height` | `LINE_HEIGHT` | `var(--type-<papel>-<tamanho>-line-height)` |
+| `type/<papel>/<tamanho>/letter-spacing` | `LETTER_SPACING` | só quando o grupo tem tracking diferente de 0 e igual em todas as variantes |
+
+**Regras:**
+- **Variantes de um grupo têm o mesmo tamanho, entrelinha e tracking.** Se divergem (`label/sm` com 0,55 px e `label/sm-strong` com 1,1 px), a variável daquela propriedade não é compartilhada: a de tracking fica de fora, e uma divergência de tamanho ou entrelinha é bloqueante até alguém decidir.
+- **Variável de entrelinha e de tracking só aceita px.** Uma entrelinha em `%` ou `AUTO` precisa ser convertida antes; tracking em `%` vira px (valor × tamanho ÷ 100).
+- **Tracking em px escala com o tamanho:** mobile = desktop × (tamanho mobile ÷ tamanho desktop). Um `display/xl` com −5,5 px em 220 vai a −2 px em 80.
+- **Entrelinha mobile mantém a proporção do desktop**, arredondada para a grade de 2 px, e nunca abaixo de 1,5× em `body/*` e `lead/*`.
+- **Até 16 px, o tamanho não muda.** `body`, `label`, `caption`, `eyebrow`, `code` e `index` pequenos ficam iguais nos dois modos: já estão nos pisos.
+
+**Tamanho mobile sugerido** (referência medida num portfólio editorial com tela mobile de 430 px; quanto maior, mais encolhe):
+
+| Desktop | 220 | 140 | 84 | 48 | 32 | 30 | 24 | 22 | 18 | ≤ 16 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Mobile | 80 | 64 | 44 | 32 | 22 | 24 | 20 | 20 | 16 | igual |
+
+O script `responsivo.js` calcula uma sugestão para qualquer tamanho acima de 16: 16 + (desktop − 16)^0,8, arredondado para par. Para os tamanhos da tabela ela dá 86 · 64 · 46 · 32 · 26 · 24 · 22 · 20 · 18. A tabela medida fica abaixo dela no meio da escala, porque o texto de leitura (`lead/lg`, 32 → 22) encolheu mais que um título do mesmo tamanho. A sugestão é ponto de partida: confira o maior texto contra a largura da tela mobile (um nome em `display/lg` ocupa ~4,8× o tamanho da fonte em largura) e baixe um pouco os papéis de leitura.
 
 ## Heurística de mapeamento (ordem)
 

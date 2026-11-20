@@ -10,8 +10,8 @@ for skill in skills/*/; do
   mkdir -p "${skill}references"
   cp -R shared/. "${skill}references/"
   case "$skill" in
-    *espacamento*)  # só os arquivos de espaçamento
-      find "${skill}references" -mindepth 1 -maxdepth 1 ! -name 'espacamento*' -exec rm -rf {} + ;;
+    *espacamento*)  # só os arquivos de espaçamento, mais a regra comum de modos
+      find "${skill}references" -mindepth 1 -maxdepth 1 ! -name 'espacamento*' ! -name 'modos*' -exec rm -rf {} + ;;
     *)              # tipografia não recebe os arquivos de espaçamento
       rm -f "${skill}references"/espacamento*.md ;;
   esac

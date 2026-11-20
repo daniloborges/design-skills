@@ -9,7 +9,7 @@ description: Organiza as variáveis de espaçamento do arquivo (gap e padding do
 **Não use:** para cor, raio, traço, largura/altura ou texto.
 
 ## Estrutura
-Duas coleções, cada uma com um modo chamado `Default`:
+Duas coleções, cada uma com um modo chamado `Default`. Num arquivo com tela mobile, `Spacing` ganha os modos `Desktop` (o antigo `Default`, valores intocados) e `Mobile`: até `md` (16) igual; `lg` 24 → 16, `xl` 32 → 24, `2xl` 48 → 32, `layout` sm/md 64/80 → 48, lg 96 → 64, xl 128 → 80. Só nós ligados respondem; se a tipografia alterna Desktop/Mobile em outra coleção, cada frame mobile precisa das duas.
 - **Primitives** — grupo `space/<px>`: `2 4 8 12 16 24 32 48 64 80 96 128`. Valor inteiro, escopo vazio (escondido do picker). Zero não vira variável.
 - **Spacing** — escopo `GAP`, cada variável é alias de um primitivo.
 

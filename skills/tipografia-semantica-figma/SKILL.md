@@ -1,11 +1,13 @@
 ---
 name: tipografia-semantica-figma
-description: Audita estilos de texto de um arquivo Figma, propõe nomes semânticos (papel/tamanho, ex. heading/xl, body/md, big-number/lg), mostra o impacto num preview ANTES × DEPOIS numa página separada e aplica depois de aprovado, com checagens de acessibilidade. Use para revisar, renomear, consolidar ou criar estilos de texto, achar textos sem estilo, ou quando pedirem auditoria de tipografia, type scale ou compliance de texto (WCAG, LBI, CDC) no Figma. Não use para código — para isso existe tipografia-semantica-codigo.
+description: Audita estilos de texto de um arquivo Figma, propõe nomes semânticos (papel/tamanho, ex. heading/xl, body/md, big-number/lg), aplica depois de aprovado e checa acessibilidade. Use para revisar, renomear, consolidar ou criar estilos de texto, achar textos sem estilo, equilibrar tamanhos de fonte entre desktop e mobile com modos de variável, ou quando pedirem auditoria de tipografia, type scale ou compliance de texto (WCAG, LBI, CDC) no Figma. Não use para código — para isso existe tipografia-semantica-codigo.
 ---
 
 # Tipografia semântica — frente Figma
 
 Transforma estilos de texto nomeados por aparência (`Fraunces/Light wght 380`, `Text 14`) em nomes semânticos coerentes com HTML e com o código, e sinaliza os problemas de acessibilidade pelo caminho.
+
+**This is a target-state skill.** Existe uma forma correta para os estilos do arquivo, e o trabalho é fazer o arquivo chegar nela. Rodar de novo repara o que saiu da forma; o inventário e os dry-runs leem sem escrever.
 
 **Fonte de verdade:** [references/taxonomia.md](references/taxonomia.md). Leia antes de propor qualquer nome, em especial a lista fechada, o peso real, as duplicatas suspeitas e a heurística. A skill `tipografia-semantica-codigo` usa a mesma taxonomia.
 
@@ -24,6 +26,7 @@ Confirme o arquivo e a página ativos. Se houver mais de um arquivo aberto, diga
 - **Escala:** produto/UI (faixas padrão) ou expressiva/editorial. No caso editorial, a escala do projeto vira `tipografia.faixas.json`; os pisos não mudam.
 - **Biblioteca publicada?** Se os estilos são consumidos por outros arquivos, use `reuse` nos alvos: renomear mantém a chave e não quebra os consumidores.
 - **Auditoria legal:** só se pedirem (passo 7).
+- **Tela mobile:** se o arquivo tem frames mobile, ou pedirem para equilibrar desktop e mobile, o passo 8 entra depois dos nomes.
 
 ### 2. Inventário (somente leitura)
 Rode `scripts/inventario.js`. Ele devolve:
@@ -97,6 +100,22 @@ Siga [references/legal/README.md](references/legal/README.md):
 - devolva um checklist ✅ / ❌ / ⚠️ / 🔍;
 - encaminhe os itens 🔍 para a skill de código.
 
+### 8. Modo responsivo (Desktop × Mobile)
+Liga tamanho, entrelinha e tracking de cada estilo a variáveis com um valor por modo. O nome do estilo não muda. Pré-requisito: os estilos já têm nomes da taxonomia (passos 2–6). Leia antes [references/modos.md](references/modos.md) (onde as variáveis moram, valor de desktop exato, verificação) e a seção "Escala responsiva" de [references/taxonomia.md](references/taxonomia.md) (regras e tabela de tamanhos).
+
+A configuração vai em `ARGS`: no `figma_execute`, ponha `const ARGS = { dryRun: true };` antes do texto do script; no `figma-run`, `--args arquivo.json`. As chaves são `dryRun`, `page`, `collection` (nome ou id da coleção que recebe as variáveis), `mobile`, `setMode`, `frames` e `verify`; o cabeçalho do script descreve cada uma.
+
+1. **Rode `scripts/responsivo.js` com `{ dryRun: true, page: '<página com as telas>' }`**. O script acha sozinho os frames mobile (telas em pé de 320 a 480 px, ou com um modo `Mobile` explícito) e a coleção: a que já guarda variáveis `type/*`; senão a primeira com os modos `Desktop` e `Mobile` que não seja de espaçamento; sem nenhuma, cria `Viewport`. Passe `frames: [ids]` só quando a detecção errar. Leia a saída nesta ordem:
+   - `avisos` com "não tem frame de desktop" → o arquivo (ou a página) é só mobile; não há o que equilibrar. Confirme com o usuário antes de seguir.
+   - `bloqueios` não vazio → pare e pergunte: variantes divergentes ou entrelinha em `%` são decisão de design, não do script.
+   - `outras` não vazio → existe mais de uma coleção com modos de tela. Escolha a que recebe a tipografia, passe-a em `collection` e diga ao usuário que cada frame mobile precisa de `Mobile` nas duas.
+   - `frames` → quantos textos têm estilo, quantos não têm e quantos são mistos. Só os que têm estilo respondem ao modo; diga isso antes de prometer o resultado.
+   - `plano` → cada variável como `desktop → mobile`, com a `sugestão` ao lado enquanto o grupo não está em `mobile`. Quando a coleção já tem o modo Mobile, o valor de partida é o de hoje (marcado "Mobile de hoje"), e rodar de novo sem `mobile` só repara as ligações.
+2. **Monte o `mobile`** (`{ 'heading/xl': [44, 44] }`; a chave é o grupo do estilo, com o prefixo de marca quando houver). Parta da `sugestão` do plano. Baixe um pouco os papéis de leitura (`lead/*`), que encolhem mais que um título do mesmo tamanho, e confira o maior texto contra a largura da tela mobile. A tabela medida da taxonomia é um exemplo de resultado, não uma regra.
+3. **Mostre a tabela "estilo → desktop → mobile"** com a regra usada (o pequeno fica, o grande encolhe mais) e espere a aprovação. É uma mudança visual no mobile.
+4. **Rode com `dryRun: false`**, o `mobile` aprovado e `setMode` nos frames mobile que ainda não têm modo explícito na coleção.
+5. **Confira:** `verificacao` sem divergência (o script lê o valor resolvido nos mesmos frames), um screenshot do frame mobile (o maior texto cabe na largura) e um do desktop (igual ao de antes). Liste os textos sem estilo e mistos de `frames` como pendência.
+
 ## Execução sem MCP (opcional, só figma-console)
 
 Se o arquivo usa o plugin **Desktop Bridge do figma-console** e a sessão roda **no mesmo computador do Figma**
@@ -111,6 +130,10 @@ node figma-run.mjs scripts/inventario-tipografia.js --set page="📖 Tipografia"
 
 Em sessão na nuvem ou sem figma-console, use as ferramentas do MCP normalmente. Todos os scripts aceitam `ARGS`
 opcional e rodam iguais nos dois caminhos.
+
+Saída do `figma-run`: `0` ok, `1` erro no script, `3` nenhuma porta livre, `4` o plugin não conectou. O `3` acontece
+quando há 10 ou mais sessões com o figma-console MCP aberto, porque cada uma ocupa uma das portas 9223–9232. Nesse
+caso, rode o script pelo `figma_execute`, sem fechar sessões que não são suas.
 
 Para recriar só o inventário (página de referência) a qualquer momento: `scripts/inventario-tipografia.js`
 (página, nome do frame e título por ARGS).
@@ -136,5 +159,6 @@ Para o código: nomes type-*, itens 🔍 → tipografia-semantica-codigo
 
 ## References
 - [taxonomia.md](references/taxonomia.md): nomes, faixas, HTML, pisos, heurística, duplicatas, contraste. **Obrigatório.**
+- [modos.md](references/modos.md): modos Desktop × Mobile, comuns a tipografia e espaçamento. Leia no passo 8.
 - [plataformas.md](references/plataformas.md): equivalência com M3, Apple, Fluent e design systems.
 - [legal/](references/legal/README.md): auditoria legal BR opcional.

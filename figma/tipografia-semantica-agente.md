@@ -129,6 +129,14 @@ Rode o **BLOCO A** de novo e confira:
 
 No chat: "Pronto. Estilos 95 → 29 · sem estilo 187 → 3 · pendências: …". Se algo falhou, liste só isso.
 
+## 7. Desktop × Mobile (só se o arquivo tem tela mobile ou pedirem)
+
+O nome do estilo não muda; tamanho, entrelinha e tracking vêm de variáveis `type/<papel>/<tamanho>/{font-size,line-height,letter-spacing}` com modos `Desktop` (primeiro, valor atual exato) e `Mobile`.
+- Use a coleção que já tem esses modos. Se o espaçamento estiver em outra, avise: cada frame mobile precisa de `Mobile` nas duas.
+- Até 16 px não muda. Acima, quanto maior, mais encolhe: 220 → 80, 140 → 64, 84 → 44, 48 → 32, 32 → 22, 24 → 20. Tracking em px escala junto com o tamanho.
+- Variantes de um grupo com tamanho ou entrelinha diferentes: pare e pergunte.
+- Mostre a tabela estilo → desktop → mobile e **pare para aprovação**. Depois confira o tamanho de um texto dentro de um frame mobile, não no painel de estilos, e liste os textos sem estilo: eles não mudam.
+
 ---
 
 ## BLOCO A — inventário (só leitura)
