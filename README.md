@@ -66,6 +66,13 @@ O plugin traz quatro skills. As três de tipografia e espaçamento seguem etapas
 
 Chame pelo nome, por exemplo `/design:tipografia-semantica-figma`, ou peça em linguagem natural: "audite os estilos de texto deste arquivo do Figma" ou "confira src/ contra a taxonomia de tipografia". As duas skills do Figma mostram um preview ANTES × DEPOIS numa página separada e só alteram o arquivo original depois da sua aprovação.
 
+### Guardas do figma-console
+
+O plugin também vigia as chamadas ao `figma_execute`, sem nenhum comando:
+
+- **API síncrona:** um script que usa `figma.getNodeById(`, `node.textStyleId =` ou outra chamada que o Figma recusa com `documentAccess: dynamic-page` é barrado antes de chegar ao Figma, já com a troca pela versão `Async`. Vale em qualquer versão do Claude Code.
+- **Arquivo alvo (`figma-details`):** com dois ou mais arquivos do Figma conectados, uma chamada sem `fileKey` é barrada com a lista de arquivos e suas chaves, para não escrever no arquivo errado. Depois de cada chamada, a linha de status mostra o arquivo alvo, por exemplo `Figma → Portfólio (2 abertos)`. Esta parte é um mod e precisa de uma versão do Claude Code com mods; sem ela, a chamada volta a ir para o arquivo ativo.
+
 A skill de código também roda sem o Claude:
 
 ```bash
